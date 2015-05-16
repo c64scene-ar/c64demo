@@ -1,3 +1,4 @@
-# c64demo
+# C64Demo
 
-yoooo
+Check the Wiki for a route map.
+
