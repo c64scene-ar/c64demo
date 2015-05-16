@@ -17,14 +17,14 @@
 //    specify output file
 //============================================================
 
-.filenamespace hello_world
+//.filenamespace lala
 :BasicUpstart2(main)
 
 //============================================================
-//    setup and init symbols we use in the code
+// load resource files (for this small intro its just the sid)
 //============================================================
 
-.import source "code/setup_symbols.asm"
+.import source "code/load_resources.asm"
 
 //============================================================
 // tables and strings of data 
@@ -34,27 +34,21 @@
 .import source "code/data_colorwash.asm"
 
 //============================================================
-//  Main routine with IRQ setup and custom IRQ routine
-//============================================================
-
-.import source "code/main.asm"
-
-//============================================================
 // one-time initialization routines
 //============================================================
 
 .import source "code/init_clear_screen.asm"
 .import source "code/init_static_text.asm"
 
-// //============================================================
-// //    subroutines called during custom IRQ
-// //============================================================
+//============================================================
+//    subroutines called during custom IRQ
+//============================================================
 
-// .import source "code/sub_colorwash.asm"
-// .import source "code/sub_music.asm"
+.import source "code/sub_colorwash.asm"
 
-// //============================================================
-// // load resource files (for this small intro its just the sid)
-// //============================================================
+//============================================================
+//  Main routine with IRQ setup and custom IRQ routine
+//============================================================
 
-// .import source "code/load_resources.asm"
+.import source "code/main.asm"
+

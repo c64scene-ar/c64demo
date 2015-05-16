@@ -1,4 +1,5 @@
-; load sid music
+// load sid music
 
-* = address_music                         ; address to load the music data
-!bin "resources/jeff_donald.sid",, $7c+2  ; remove header from sid and cut off original loading address 
+.var music = LoadSid("/home/mica/Projects/c64demo/resources/jeff_donald.sid")
+.pc = music.location
+.fill music.size, music.getData(i)
