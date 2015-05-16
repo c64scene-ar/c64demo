@@ -1,6 +1,6 @@
 //============================================================
 // Example Project for C64 Tutorials  
-// Code by actraiser/Dustlayer
+// src by actraiser/Dustlayer
 // Music: Ikari Intro by Laxity
 //
 // Simple Colorwash effect with a SID playing
@@ -24,31 +24,31 @@
 // load resource files (for this small intro its just the sid)
 //============================================================
 
-.import source "code/load_resources.asm"
+.import source "src/res/load_resources.asm"
 
 //============================================================
 // tables and strings of data 
 //============================================================
 
-.import source "code/data_static_text.asm"
-.import source "code/data_colorwash.asm"
+.import source "src/init/statictext_data.asm"
+.import source "src/fx/colorwash_data.asm"
 
 //============================================================
 // one-time initialization routines
 //============================================================
 
-.import source "code/init_clear_screen.asm"
-.import source "code/init_static_text.asm"
+.import source "src/init/clearscreen_init.asm"
+.import source "src/init/statictext_init.asm"
 
 //============================================================
 //    subroutines called during custom IRQ
 //============================================================
 
-.import source "code/sub_colorwash.asm"
+.import source "src/fx/colorwash_sub.asm"
 
 //============================================================
 //  Main routine with IRQ setup and custom IRQ routine
 //============================================================
 
-.import source "code/main.asm"
+.import source "src/main.asm"
 
