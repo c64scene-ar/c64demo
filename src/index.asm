@@ -32,6 +32,7 @@
 
 .import source "init/statictext_data.asm"
 .import source "fx/colorwash_data.asm"
+.import source "fx/scroller_data.asm"
 
 //============================================================
 // one-time initialization routines
@@ -45,6 +46,7 @@
 //============================================================
 
 .import source "fx/colorwash_sub.asm"
+.import source "fx/scroller_sub.asm"
 
 //============================================================
 //  Main routine with IRQ setup and custom IRQ routine

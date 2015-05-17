@@ -22,8 +22,8 @@ main:
     and #$7f    // it is basically the 9th Bit for $d012
     sta $d011   // we need to make sure it is set to zero for our intro.
 
-    lda #<irq   // point IRQ Vector to our custom irq routine
-    ldx #>irq 
+    lda #<main_loop   // point IRQ Vector to our custom irq routine
+    ldx #>main_loop 
     sta $314    // store in $314/$315
     stx $315   
 
@@ -37,10 +37,11 @@ main:
 //    custom interrupt routine
 //============================================================
 
-irq:        
+main_loop:        
     dec $d019        // acknowledge IRQ / clear register for next interrupt
 
     jsr colwash      // jump to color cycling routine
+    jsr scroll      // jump to scroller
     jsr music.play	  // jump to play music routine
 
     jmp $ea81        // return to kernel interrupt routine
