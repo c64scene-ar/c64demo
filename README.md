@@ -1,4 +1,6 @@
-# C64Demo
+# C64 Projects!
 
-Check the Wiki for a route map.
+Compile the c64 demo project with KickAssembler
+
+Check the Wiki for a route map and other projects.
 
