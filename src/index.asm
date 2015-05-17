@@ -24,31 +24,31 @@
 // load resource files (for this small intro its just the sid)
 //============================================================
 
-.import source "src/res/load_resources.asm"
+.import source "res/load_resources.asm"
 
 //============================================================
 // tables and strings of data 
 //============================================================
 
-.import source "src/init/statictext_data.asm"
-.import source "src/fx/colorwash_data.asm"
+.import source "init/statictext_data.asm"
+.import source "fx/colorwash_data.asm"
 
 //============================================================
 // one-time initialization routines
 //============================================================
 
-.import source "src/init/clearscreen_init.asm"
-.import source "src/init/statictext_init.asm"
+.import source "init/clearscreen_init.asm"
+.import source "init/statictext_init.asm"
 
 //============================================================
 //    subroutines called during custom IRQ
 //============================================================
 
-.import source "src/fx/colorwash_sub.asm"
+.import source "fx/colorwash_sub.asm"
 
 //============================================================
 //  Main routine with IRQ setup and custom IRQ routine
 //============================================================
 
-.import source "src/main.asm"
+.import source "main.asm"
 
