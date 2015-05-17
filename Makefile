@@ -8,7 +8,7 @@ CT=$(SRC_DIR)/res/demo.ct
 SID=$(patsubst %.ct,%.sid,$(CT))
 
 $(PRG): $(SRC_DIR)/index.asm $(SOURCES)
-	java -jar vendor/KickAss/KickAss.jar $< -o $@ -libdir $(SRC_DIR)/ -showmem -symbolfile
+	java -jar vendor/KickAss.jar $< -o $@ -libdir $(SRC_DIR)/ -showmem -symbolfile
 
 sid: $(SID)
 $(SID): $(CT)
