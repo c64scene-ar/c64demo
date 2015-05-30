@@ -4,7 +4,7 @@
 
 
 init_text:
-	ldx #$28          // iterate $28 times (40 cols)
+	ldx #$27          // iterate $28 times (40 cols)
 loop_text:
 	lda line1,x      // read characters from line1 table of text...
 	///sta $0590,x      // ...and store in screen ram near the center

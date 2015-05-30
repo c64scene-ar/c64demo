@@ -15,16 +15,16 @@ cycle1:
     cpx #$28           // have we done 40 iterations yet?
     bne cycle1         // if no, continue
 
-// colwash2:
-//     lda color2+$27     // load current last color from second table
-//     sta color2+$00     // store in in first position of table to reset the cycle
-//     ldx #$28
+colwash2:
+    lda color2+$27     // load current last color from second table
+    sta color2+$00     // store in in first position of table to reset the cycle
+    ldx #$28
 
-// cycle2:
-//     lda color2-1,x     // Start cycle by fetching previous color in the table...
-//     sta color2,x       // ...and store it in the current active position.
-//     sta $d9df,x        // put into Color Ram
-//     dex                // decrease iterator
-//     bne cycle2         // if x not zero yet, continue
+cycle2:
+    lda color2-1,x     // Start cycle by fetching previous color in the table...
+    sta color2,x       // ...and store it in the current active position.
+    sta $daa8,x        // put into Color Ram
+    dex                // decrease iterator
+    bne cycle2         // if x not zero yet, continue
 
     rts                // return from subroutine

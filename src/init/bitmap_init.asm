@@ -1,4 +1,5 @@
 // Init the bitmap loaded at $2000
+// Use the screen ram at 0xc00 (0x400 is being used by text screen ram)
 
 init_bitmap:
 	ldx #$00
