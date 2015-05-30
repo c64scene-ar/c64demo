@@ -1,11 +1,5 @@
 //============================================================
-// Example Project for C64 Tutorials  
-// src by actraiser/Dustlayer
-// Music: Ikari Intro by Laxity
-//
-// Simple Colorwash effect with a SID playing
-//
-// Tutorial: http://dustlayer.com/c64-coding-tutorials/2013/2/17/a-simple-c64-intro
+// Based on Dustlayer's examples:
 // Dustlayer WHQ: http://dustlayer.com
 //============================================================
 
@@ -40,6 +34,7 @@
 
 .import source "init/clearscreen_init.asm"
 .import source "init/statictext_init.asm"
+.import source "init/bitmap_init.asm"
 
 //============================================================
 //    subroutines called during custom IRQ
