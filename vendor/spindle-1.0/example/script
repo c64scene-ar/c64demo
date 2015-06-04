@@ -1,0 +1,8 @@
+# This is an example script bundled with Spindle
+# http://www.linusakesson.net/software/spindle/
+
+spindlelogo/spindlelogo.pef	-
+music/music.pef			-
+ecmplasma/ecmplasma.pef		ed = 0b
+lft/lft.pef			space
+-				-

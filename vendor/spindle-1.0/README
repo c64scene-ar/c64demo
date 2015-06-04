@@ -1,0 +1,626 @@
+Spindle 1.0 by lft
+
+http://www.linusakesson.net/software/spindle/
+
+	The White Rabbit put on his spectacles. "Where shall
+	I begin, please your Majesty?" he asked.
+	"Begin at the beginning", the King said, very gravely,
+	"and go on till you come to the end: then stop."
+
+	-- Lewis Carroll, "Alice's Adventures in Wonderland"
+
+======== Introduction ========================================================
+
+Spindle is an integrated linking, loading and crunching solution for C64
+trackmos. By hiding the details of the storage model, it allows the demo coder
+to focus on effects, transitions and flow.
+
+Independently developed demo parts can be chained together easily, in any
+order, facilitating exploration of the design space in order to arrive at a
+rough cut. Spindle then assists the coder by suggesting where and how filler
+parts could be crafted to improve the loading process. A visualisation of block
+demand and memory usage over time provides further optimisation hints.
+
+Spindle is equipped with a cutting-edge IRQ loader featuring scattered loading,
+state of the art serial transfer routines and GCR decoding on the fly.
+
+The compression scheme is optimised for extremely fast scattered decrunching,
+at the cost of sub-optimal compression ratio. As measured on my demo Shards of
+Fancy, the average compression ratio is 45%, not counting internal
+fragmentation.
+
+Currently, only single-side trackmos are supported. The data is laid out to
+minimise seek times: The first demo part is located near the middle of the
+disk, and the following parts are stored in order from outer to inner tracks.
+Directory art can be supplied in the form of a text file. While Spindle uses
+its own D64-compatible storage format, it respects and coexists with the native
+commodore disk structure, so demo disks can be adorned with noters and other
+auxiliary files using standard tools like c1541.
+
+======== License =============================================================
+
+Go ahead and use this in your demos! You can include the spindle logo
+(example/spindlelogo) if you like, but you don't have to. I would appreciate
+some credit though, e.g. "Loader by lft".
+
+Please refer to the file COPYING for the formal stuff.
+
+======== Requirements & building =============================================
+
+Spindle is designed for Linux, but it should be fairly portable.
+
+To build Spindle, you need gcc, GNU make and xa (the latter is found in the
+xa65 debian package). Copy the "spindle" subdirectory to where you keep the
+source code for your upcoming trackmo, enter it and type:
+
+	make
+
+This should produce three executable files: mkpef, pef2prg and pefchain. There
+is no "make install", because I recommend that you keep a local copy of Spindle
+close to each demo. The details (and timing) of Spindle may change across
+versions, and it's a good idea to be able to re-build a demo long after its
+release, and obtain exactly the same disk image.
+
+Demo parts can be developed using any tools you like, but some kind of make
+system is recommended.
+
+======== General structure ===================================================
+
+The basic building block of a Spindle trackmo is the individual demo part. A
+part is handled as a single file with the extension .pef (packaged effect). The
+mkpef tool is used to bundle any number of data chunks, with different target
+addresses in C64 RAM, into such a file.
+
+The first chunk, which typically contains all the code for the part, must start
+with a special header. Such a file is called an effect object (filename
+extension .efo), but it's just a regular binary file produced by your favourite
+assembler. All you have to do is place some constant declarations at the top of
+the file, with information for the linking system and pointers to a few
+routines, as detailed below.
+
+During part development (and in the case of a one-file demo), you can use
+pef2prg to convert a .pef file into a C64 executable file that runs the part.
+
+Another tool, pefchain, links together several parts according to a script, and
+produces a complete trackmo in the form of a D64 image. In the script file, you
+get to specify a transition condition for each part, typically "space" during
+early development (wait for the user to press space). Later on, these
+conditions are changed into waiting for a memory address to contain a given
+value (for synchronising with music).
+
+     effect1.s                               effect2.s
+         |                                       |
+         | assembler                             | assembler
+         |                                       |
+     effect1.efo data1.prg                   effect2.efo data2a.prg data2b.prg
+         |           |                           |           |          |
+         +-----------'                           +-----------+----------'
+         | mkpef                                 | mkpef
+         |                                       |
+     part1.pef            script             part2.pef
+       |   |                 |                 |   |
+       |   `-----------------+-----------------'   |
+       |                     |                     |
+       | pef2prg             | pefchain            | pef2prg
+       |                     |                     |
+     part1.prg            trackmo.d64          part2.prg
+
+For more information about the individual Spindle tools, please run them with
+the --help (or -h) option, and study the makefiles in the example directory.
+
+======== Parts ===============================================================
+
+An .efo file starts with the following fixed-size header (with no loading
+address before it):
+
+	.byt	"EFO2"		; fileformat magic
+	.word	prepare		; prepare routine
+	.word	setup		; setup routine
+	.word	interrupt	; irq handler
+	.word	main		; main routine
+	.word	fadeout		; fadeout routine
+	.word	cleanup		; cleanup routine
+	.word	callmusic	; location of playroutine call
+
+The fixed-size header is followed by a variable-size list of options. An option
+consists of a single tag byte followed by 0-2 parameter bytes (depending on the
+tag).
+
+Options affect pefchain, but not pef2prg, so you don't need to bother with them
+while developing a new effect. The valid tags are:
+
+	.byt	"P",FIRST,LAST
+
+	Declares that this demo part uses the range of memory pages from FIRST
+	up to and including LAST. There is no need to declare memory pages that
+	are loaded, i.e. are in the loading range of one of the chunks that
+	make up a packaged effect. But if you generate code or tables at
+	runtime, you have to declare that memory. You can use this option
+	multiple times.
+
+	.byt	"I",FIRST,LAST
+
+	Declares that this demo part inherits the contents of the range of
+	memory pages from FIRST up to and including LAST from the previous
+	part. Normally, you don't need to use this option. But it comes in
+	handy when you start coding transitions between parts, such as when you
+	load a bitmap as part of a preliminary fade-in part, and then wish to
+	re-use that same bitmap in the actual part. You can use this option
+	multiple times.
+
+	.byt	"Z",FIRST,LAST
+
+	Declares that this demo part uses zero-page locations from FIRST up to
+	and including LAST. For convenience, I usually keep all zero-page
+	locations used by an effect close together, and declare a slightly
+	larger range. You can use this option multiple times.
+
+	.byt	"S"	(no parameter bytes)
+
+	"Safe I/O". Declares that any interrupt handlers used in this demo part
+	are able to coexist with loading operations that access shadow RAM at
+	$d000-$dfff. In practice, such interrupt handlers should back up the
+	value at $01, store $35 into $01, handle and acknowledge the interrupt,
+	and finally restore the previous value at $01.
+
+	.byt	"X"	(no parameter bytes)
+
+	Declares that loading should be avoided during this demo part.
+	Normally, if a part lacks a main routine, Spindle will assume that this
+	is a good place to do some loading. Sometimes you'll want to prevent
+	that, in particular when a main-less part nevertheless uses a lot of
+	rastertime.
+
+	.byt	"M",LSB,MSB
+
+	Declares that this demo part installs a music player with a given
+	playroutine address. This option will be described in detail later in
+	the document.
+
+	.byt	0	(no parameter bytes)
+
+	Marks the end of the tag list.
+
+Following the final tag byte (null) is the loading address of the rest of the
+file, which normally contains the code for the demo part. The vectors in the
+fixed-size header typically point to routines inside this area.
+
+======== Runtime concerns ====================================================
+
+The Spindle runtime occupies 1 kB of C64 RAM at $c00-$fff, as well as zero-page
+locations $f0-$f7.
+
+I recommend that you stick to addresses $3000-$ffff while developing new
+effects. Personally, I tend to load code at $3000, and place generated
+speedcode and tables from $8000 and up, but that's a matter of taste. Later in
+your demo project, as you start optimising loading times, you'll be moving
+things around, so use labels!
+
+In order to avoid race conditions visavi the serial transfer routines, demo
+parts are not allowed to touch $dd00. Instead, VIC bank selection is handled
+through $dd02. Here is a handy table of constants:
+
+	$dd02 	VIC bank
+	-------------------
+	$3c	$0000-$3fff
+	$3d	$4000-$7fff
+	$3e	$8000-$bfff
+	$3f	$c000-$ffff
+
+As a convenience for the demo coder, Spindle sets up timer B of CIA #1 to count
+down repeatedly with a 9-cycle period, synchronised with the raster position.
+The choice of timer (and the fact that the Spindle runtime stays out of pages
+1-8) is compatible with distributed jitter correction of NMIs, and the phase of
+the countdown period allows for delay-based jitter correction of raster
+interrupts using the following code snippet, which also appears in
+template/effect.s:
+
+interrupt
+	; nominal sync code with no sprites:
+	sta	int_savea+1	; 10..16
+	lda	$dc06		; in the range 1..7
+	eor	#7
+	sta	*+4
+	bpl	*+2
+	lda	#$a9
+	lda	#$a9
+	lda	$eaa5
+	; at cycle 35
+
+If any of sprites 3-7 are enabled, you have to compensate accordingly, of
+course.
+
+Spindle also enables raster interrupts and disables all CIA interrupts.
+
+======== Lifecycle ===========================================================
+
+This is the lifecycle of a demo part, regarded in isolation:
+
+	----- Preparations -----------------------------------------
+	1. Load any remaining sectors
+	2. Call prepare
+	----- Switchover -------------------------------------------
+	3. Disable interrupts
+	4. Store the address of the interrupt routine at $fffe-$ffff
+	5. Call setup
+	6. Enable interrupts
+	----- Running ----------------------------------------------
+	7. Repeatedly call main until some condition (e.g. space)
+	8. Repeatedly call main until fadeout sets carry
+	----- Aftermath --------------------------------------------
+	9. Call cleanup
+
+All of the routines are optional: Supply a null pointer to make Spindle ignore
+a particular vector. In my experience, most new effects start out with just
+"prepare", "setup" and "interrupt".
+
+The "prepare" routine is responsible for the bulk of the initialisation. This
+is where you generate speedcode and tables, make copies of graphics data across
+multiple banks and so on. You should not write to any VIC registers in
+"prepare".
+
+The job of the "setup" routine is to initialise the VIC registers (including
+colour RAM) just before the effect starts. This routine executes with
+interrupts disabled, and should be fast. Don't forget to initialise d011, d012,
+d015, d016, d018 and dd02. Your part may follow some other part that leaves
+unexpected values in these registers.
+
+The "interrupt" routine obviously executes in interrupt context; this pointer
+is written directly to the vector at $fffe. Of course you can modify $fffe as
+part of your effect; Spindle only writes this vector at step 4 in order to
+minimise the amount of boilerplate code needed to get a new demo part up and
+running.
+
+The "main" routine is intended for so called newskool effects that fill a
+framebuffer as fast as possible but don't achieve full frame rate. Try to avoid
+using a "main" routine whenever you can; more about this later.
+
+The "fadeout" routine typically does two things: It triggers a fadeout
+operation, usually by setting a global flag that affects the behaviour of the
+running effect. It also monitors the fadeout in progress, returning with carry
+set if the fadeout has completed. Mnemonic: "Carry" on with the next effect. If
+the demo part is main-less, "fadeout" is simply called repeatedly in a tight
+loop. Otherwise, Spindle alternately calls "main" and "fadeout".
+
+Finally, the "cleanup" routine can be used to tear down the demo part in a
+controlled fashion. It is called while interrupts are still enabled, but you
+can put a sei instruction inside "cleanup" if this is desireable. You could,
+for instance, install a non-maskable timer interrupt in "setup" and disable it
+in "cleanup". More commonly, you could use "cleanup" to wait for a particular
+rasterline before moving on to the next demo part.
+
+When several demo parts are linked together, their lifecycles overlap.
+Specifically, the call to "prepare" is made while the interrupt handler of the
+previous part is still active. This clearly won't work if the memory ranges
+occupied by adjacent parts overlap, and that is one of the reasons for having
+to declare the memory usage of each part. If two adjacent parts would collide
+in memory, pefchain inserts a blank part between them (and prints a warning
+about it). The blank part consists of a completely black screen with no
+badlines, along with an interrupt handler that merely calls the current music
+player.
+
+Loading is performed while the parts are running. Spindle prefers to load
+during parts that lack a "main" routine, but if necessary, it can also schedule
+some loading operations after "fadeout" returns with carry set, before the call
+to "cleanup". In dire circumstances, Spindle may be forced to insert a blank
+part in order to do some loading (e.g. into the I/O range), in which case it
+will print a warning.
+
+The following illustrates the switchover from one (main-less) demo part to
+another:
+
+----- Preparations ------------------
+1. Load any remaining sectors
+   (and also load as much as possible
+   in preparation for later parts)
+2. Call prepare
+----- Switchover --------------------
+3. Disable interrupts
+4. Install interrupt vector
+5. Call setup
+6. Enable interrupts
+----- Running -----------------------	----- Preparations ------------------
+					1. Load any remaining sectors
+					   (and also load as much as possible
+					   in preparation for later parts)
+					2. Call prepare
+7. Wait for condition (e.g. space)
+8. Call fadeout until it sets carry
+----- Aftermath ---------------------	----- Switchover --------------------
+9. Call cleanup                       
+					3. Disable interrupts
+					4. Install interrupt vector
+					5. Call setup
+					6. Enable interrupts
+					----- Running -----------------------
+					7. Call main until condition
+					8. Call main until fadeout sets carry
+					----- Aftermath ---------------------
+					9. Call cleanup                       
+
+When switching from a demo part with a main routine, the items in the
+simultaneous Running and Preparations phases are performed in a different
+order. In this case, Spindle starts with steps 7 and 8 of the first part, and
+then moves on to steps 1 and 2 of the second, and it tries to minimise rather
+than maximise the amount of loading.
+
+======== Making a chain ======================================================
+
+The script file controls how all the parts fit together to make a trackmo.
+Here's an example:
+
+	# This is an example script bundled with Spindle
+	# http://www.linusakesson.net/software/spindle/
+
+	spindlelogo/spindlelogo.pef	-
+	music/music.pef			-
+	ecmplasma/ecmplasma.pef		ed = 0b
+	lft/lft.pef			space
+	-				-
+
+This trackmo consists of five parts. The first four parts are supplied as .pef
+files (paths are relative to the current directory when pefchain is invoked),
+and the fifth is the internal blank part, which is simply a black screen and an
+interrupt handler that calls the music player.
+
+In the second column are transition conditions. These tell Spindle when it is
+time to advance from step 7 to step 8 in the effect lifecycle. There are three
+kinds of conditions: "space" means wait for space to be pressed, "-" means drop
+through to the fadeout stage (after any scheduled loading has completed), and
+"address = value" means to wait until the given address contains the given
+value. In the example, I rely on the fact that my music playroutine stores the
+current song position at zero-page location $ed.
+
+The condition of the last part of a script is ignored; that part executes
+indefinitely.
+
+======== Music ===============================================================
+
+A demo part may install a music player. Such a part would make a call from
+"setup" to the init routine of the tune, and also declare the address of the
+playroutine using the "M" tag. Please have a look at example/music/install.s
+for a minimal example.
+
+The interrupt handlers of subsequent effects should be fitted with a dummy
+three-byte instruction (e.g. bit !0), and the address of this instruction
+should be given in the last field of the .efo header. At link time (not
+runtime), Spindle will replace the dummy instruction with a jsr to the
+currently installed playroutine. This makes it very easy to move parts around
+in a trackmo with multiple tunes, and to move tunes around in memory. The dummy
+instruction remains if the part is scheduled to run even though no music player
+has been installed, which is always the case when the part is launched with
+pef2prg.
+
+Only one music player may be active at a time, so installing a second player
+replaces the first one. To uninstall the current music player, use the "M" tag
+with a null parameter.
+
+Spindle assumes that any data chunk in a music-installing .pef file, apart from
+the first (the one with the .efo header), represents a global allocation of
+memory that should remain reserved until the music player is uninstalled or
+replaced. Subsequent parts implicitly inherit the contents of those memory
+pages. This is normally what you want, but it will generally prevent you from
+installing a music player as a side-effect in a demo part that also does
+something visually. Please let me know if this is a problem.
+
+For robustness, the music-installing demo part must have a null "callmusic"
+field, and must itself provide either an interrupt handler with a regular jsr
+to the playroutine, or a dummy interrupt handler such as "lsr $d019 : rti". A
+null interrupt vector would tell Spindle to use the interrupt handler from the
+blank effect, which in this case would make calls to the previously installed
+playroutine.
+
+======== Visualisation =======================================================
+
+Apart from producing the D64 image, pefchain prints a chart detailing the
+memory usage of every part. This is what it looks like for the example trackmo:
+
+0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f   
+...r....................................ccc.....................  16 spindlelogo.pef
+...rLLLLLL..............................|||................c....  85 music.pef
+...r||||||..LUU....................c...........................U   5 ecmplasma.pef
+...r||||||cc...ULLL.LLL.LLLLLLLULLL.LLL.LLLLLLLULLLLLLLULLL.LLL.     lft.pef
+...r||||||......................................................     (blank)
+demo.d64: 553 blocks free.
+
+By default, every column in the chart corresponds to four pages of RAM, but the
+"-w" option can be given once or twice to increase the granularity. Here is a
+legend for the characters:
+
+  r  This memory is reserved for the Spindle runtime system.
+  .  This memory is not used by the part.
+  L  This memory is loaded from disk.
+  c  This memory is loaded from disk as part of the .efo chunk ("code").
+  U  This memory is used by the part (but not loaded).
+  |  This memory is inherited from the previous part.
+
+The number in the second-rightmost column indicates how many sectors (of
+compressed data) are loaded during this part. As a general rule, Spindle tries
+to load everthing as early as possible. This behaviour is often what you want,
+and if not, it is very easy to modify by adding false page-used declarations
+("P" tag) to parts. Furthermore, the "X" tag can be used to minimise the
+loading that takes place during a part. This has been done for
+"spindlelogo.pef" in the example, because it is more interesting for the
+audience if the bulk of the loading occurs after the music has started.
+
+In the example, the 16 blocks loaded during spindlelogo.pef correspond to the
+"LLLLLL" and "c" segments of music.pef. After music.pef has been launched,
+Spindle loads 85 blocks comprising the "L" and "c" of ecmplasma.pef and most of
+the "L" segments of lft.pef. However, it cannot load into the memory range
+already occupied by the "ccc" of spindlelogo.pef, because this memory is still
+in use: Since the video matrix and font of spindlelogo.pef remain visible
+during music.pef, the corresponding memory pages have been declared as
+inherited (with the "I" tag) in music.pef. Once ecmplasma.pef is up and
+running, Spindle loads and decrunches five more blocks into this area.
+
+As you can see, the code and data of ecmplasma.pef fits perfectly into gaps
+left by lft.pef. This is no coincidence: The first time you run pefchain, most
+parts will interfere with each other, and Spindle will be forced to insert
+blank parts between them. But if it is at all possible to alleviate the
+situation by moving things around in memory, a quick glance at the chart will
+often be enough to see how it should be done.
+
+Whenever Spindle is forced to insert a blank part for some reason, it prints a
+warning. Where applicable, it will also suggest how to address the problem. For
+instance, if we switch the order of ecmplasma.pef and lft.pef, we get the
+following output:
+
+Warning: Inserting blank filler because 'music.pef' and 'lft.pef' share pages a0-a8.
+Suggestion: Move things around or insert a part that only touches pages 02-0b,25-27,
+2e-3d,4b-4f,5c-5f,79-7b,8b-8f,9c-9f,b9-bb,d9-db,ed-ef,fb-ff and zero-page locations
+02,12-ef,f7-ff.
+0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f   
+...r....................................ccc.....................  16 spindlelogo.pef
+...rLLLLLL..............................|||................c....  85 music.pef
+...r||||||......................................................   5 (blank)
+...r||||||cc...ULLL.LLL.LLLLLLLULLL.LLL.LLLLLLLULLLLLLLULLL.LLL.     lft.pef
+...r||||||..LUU....................c...........................U     ecmplasma.pef
+...r||||||......................................................     (blank)
+demo.d64: 553 blocks free.
+
+Depending on the demo, the brief black intermission might not be a problem.
+Another way of addressing the problem, as is visually clear from the chart,
+would be to relocate all of spindlelogo.pef to $3000 (and adjust the
+inheritance declarations in music.pef). But a third option is to follow the
+suggestion and add a filler part that doesn't interfere with the memory of its
+neighbours. Spindle lists all memory pages and zero-page locations that are
+free. Be aware, however, that Spindle currently doesn't track zero-page
+addresses used by the music player, so you have to take care of that yourself.
+For instance, my playroutine uses zero-page locations from $e0 up, so I just
+make sure to stay below that for effect code.
+
+======== Methodology =========================================================
+
+The following is merely a suggestion on how to work with Spindle. It is
+included partly as helpful advice, partly because it may shine a light some of
+the design decisions I made for the system.
+
+First, create some demo parts. Start with the template, or add an .efo header
+to your existing code. In this early phase, you'll probably only need the
+fields "prepare", "setup", "interrupt" and possibly "main" depending on the
+effect. Use pef2prg during development. Keep each demo part inside its own
+subdirectory of your main project directory for the demo, and give each part a
+short working name. The name of the .pef file should be based on this name,
+rather than something non-descriptive like "effect.pef". As the part evolves
+from an experimental hack to an enjoyable demo effect, you should at some point
+declare what memory pages and zero-page locations it uses, before you forget
+all about it.
+
+Once you have the parts, put them into a script in order of increasing
+awesomeness. All transition conditions should be "space" at this point. This
+stage corresponds to what filmmakers call "initial assembly". Watch your demo a
+couple of times and try out different orders. Be prepared to spend some time
+hunting down missing page declarations. Study the memory chart, and see if you
+can make some radical changes to improve the loading times, e.g. changing the
+order of parts, adding some fillers, and -- if it isn't too much work -- moving
+large chunks of data around. But don't start micro-optimising at this point,
+and don't make any transitions yet.
+
+Add music if you already know what SID tune you're going to use. Otherwise, let
+the general flow of the effects inspire your choice of soundtrack (or the
+process of composing one). Change all transition conditions to the "address =
+value" kind (or "-" where applicable), so that the music drives the overall
+progress of the demo. Adjust things until you are happy, and then make a
+conscious decision that you intend to stick with this part order and overall
+timing.
+
+Now you have what filmmakers call a "rough cut". Time to start working on the
+transitions. Begin with the big stuff, such as adding intermediate parts to
+e.g. make a background picture appear in anticipation of an upcoming effect.
+Since you know you won't change the order anymore, you can start using "I" tags
+to inherit data across parts, and try to improve loading times in general. You
+can also work on eliminating the blank parts inserted by Spindle. At this stage
+you'll probably add "fadeout" routines to several parts.
+
+By now you'll probably have noticed that some of the switchovers are glitchy.
+Where applicable, add "cleanup" routines to e.g. turn off interrupts and wait
+for a particular rasterline before allowing the next part to run. Take care to
+insert extra calls to the playroutine where necessary. To avoid hardcoding the
+playroutine address in such situations, I suggest copying (at runtime) the
+operand of the ordinary jsr instruction (which will have been modified by
+Spindle at link time) into a jsr inside the cleanup routine. See
+example/ecmplasma/effect.s.
+
+Inevitably, you'll find yourself in an infinite loop where you watch the demo,
+notice some detail you wish to change, change it, then watch the demo again
+just to see if it still works, notice some other detail you wish to change, and
+so on. A pro tip is to write down the small things you notice, then fix them
+all in one batch before re-watching. If you are unsure about a fix, use pef2prg
+to watch that part in isolation.
+
+When you are satisfied with the demo (or the deadline is getting uncomfortably
+close, whichever happens first), don't forget to add directory art using the
+-a, -t and -d options and to try it out on a real drive.
+
+======== Under the hood ======================================================
+
+Spindle hides a lot of details in order to streamline the trackmo linking
+process, and to let the coder spend more time thinking about the actual design
+of the demo. But C64 coders are curious creatures (in both senses of curious),
+and I don't expect anyone to use a framework like this without knowing how it
+works internally. Spindle is open source, but here's a brief overview to get
+you started.
+
+Unlike a traditional loader, Spindle does not rely on a centralised directory
+structure. Demo parts are chained together into a linked list of "files" (sets
+of sectors), each of which contains a reference to the set of sectors to load
+next. A file does not correspond to a demo part. The chunks of each demo part
+may be split further (along page boundaries), and the resulting snippets are
+scheduled to be loaded at various loading slots throughout the trackmo. Spindle
+attempts to schedule each loading operation as early as possible, during a
+main-less demo part. If this cannot be done, data will be loaded immediately
+before the part in which it is needed, possibly in a blank part.
+
+All the data for a particular loading slot is compressed into a set of sectors,
+such that each sector can be decompressed individually. The cruncher is a
+simple (greedy) implementation of an LZ packer that stops as soon as the
+crunched data fills the available space. Every sector contains a destination
+address, the number of "pieces" of crunched data, a bit stream and a byte
+stream. Because the crunched data fits in a sector, the indices into these
+streams are 8-bit quantities, which speeds up the decrunching.
+
+Between loading operations, the Spindle runtime must drive one or more demo
+parts by calling the various routines supplied via the .efo headers, and
+monitor the transition conditions. The code responsible for this is generated
+by pefchain, tailored for each part, and resides (along with a specification of
+the next file in the chain) in a special handover area of 128 bytes. Every
+loading operation also replaces the contents of the handover area.
+
+Sometimes, 128 bytes aren't enough, and pefchain will inform you that you have
+to use the -H option to allocate a full page for handovers. I suggest staying
+out of page 2 while coding demo parts, just in case you'll need it for
+handovers later. I have some ideas about how to eliminate this problem in
+future Spindle versions.
+
+Here's a rough memory map of the Spindle runtime:
+
+	$c00-$d7f	Resident part of loader, handles serial transfer.
+	$d80-$dff	Handover area.
+	$e00-$ebf	Decruncher.
+	$ec0-$eeb	Blank effect.
+	$eec-$eff	File specification to bootstrap the first demo part.
+	$f00-$fff	Sector buffer.
+
+A file specification consists of a length byte, followed by that many track
+specifications. Every track specification consists of a track number and three
+bytes of sector flags. Also, one of the unused bits in the length byte is used
+to indicate whether some parts of this file will decrunch into shadow RAM
+underneath the I/O area. When this bit is set, the loader calls the decruncher
+through a small wrapper routine that performs the required bank switching.
+
+For every track in a file, the runtime transmits the track specification to the
+drivecode, and receives the corresponding sectors in random order. The
+drivecode doesn't verify the sector checksum, but transmits it along with the
+sector contents. The data on disk has been transformed so that the receiver
+must eor each incoming byte with the previous (which can be done at no cost
+compared to just receiving the bytes and storing them as they are). Since the
+final byte received is the sector checksum, the final eor operation is expected
+to set the zero flag. In the unlikely event that this doesn't happen, either a
+read error or a transmission error has occurred. The receiver reports the
+status back to the drivecode, and both parties act accordingly. If the checksum
+was correct, the receiver decrunches the self-contained sector into its
+destination address while the drivecode fetches another one.
+
+After every loading operation, the runtime transmits a special command to the
+drive to turn off the motor. After the final loading operation, a different
+command is used to tell the drive to reboot.
