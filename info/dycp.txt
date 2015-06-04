@@ -1,0 +1,482 @@
+DYCP - Horizontal Scrolling
+
+by Pasi 'Albert' Ojala (po87553@cs.tut.fi or albert@cc.tut.fi))
+      
+	DYCP - too many sprites !?
+	--------------------------
+
+DYCP - Different Y Character Position - is a name for a horizontal scroller,
+where characters go smoothly up and down during their voyage from right to
+left. One possibility is a scroll with 8 characters - one character in each
+sprite, but a real demo coder won't be satisfied with that.
+
+Demo coders thought that it looks good to make the scrolling text change its
+vertical position in the same time it proceeded from the right side of the
+screen to the left. The only problem is that there is only eight sprites
+and that is not even nearly enough to satisfy the requirements needed for
+great look. So the only way is to use screen and somehow plot the text in
+graphics, because character columns can not be scrolled individually.
+Plotting the characters take absolutely too much time, because you have to
+handle each byte seperately and the graphics bitmap must be cleared too.
+
+
+_Character hack_
+
+The whole DYCP started using character graphics. You plot six character
+rows where the character (screen) codes increase to the right and down.
+This area is then used like a small bitmap screen. Each of the text chars
+are displayed one byte at a time on each six rows high character columns.
+This 240 character positions big piece of screen can be moved horizontally
+using the x-scroll register (three lowest bits in $D016) and after eight
+pixels you move the text itself, like in any scroll. The screen is of course
+reduced to 38 columns wide to hide the jittering on the sides.
+
+A good coder may also change the character sets during the display and
+even double the size of the scroll, but because the raster time happens
+to go to waste using this technique anyway, that is not very feasible. There
+are also other difficulties in this approach, the biggest is the time needed
+to clear the display.
+
+
+_Save characters - and time_
+
+But why should we move an eight-byte-high character image in a 48-line-high
+area, when 16 is really enough ?  We can use two characters for the graphics
+bitmap and then move this in eight pixel steps up and down. The lowest
+three bits of the y-position then gives us the offset where the data must
+be plotted inside this graphical region. The two character codes are usually
+selected to be consecutive ones so that the image data has also 16
+consecutive bytes. [See picture 1.]
+
+
+_Demo program might clear things up_
+
+The demo program is coded using the latter algorithm. The program first
+copies the Character ROM to ram, because it is faster to use it from there.
+You can easily change the program to use your own character set instead,
+if you like. The sinus data for the vertical movement is created of a 1/4
+of a cycle by mirroring it both horizontally and vertically.
+
+Two most time critical parts are clearing the character set and plotting the
+new one. Neither of these may happen when VIC is drawing the area where the
+scroll is, so there is a slight hurry. Using double buffering technique we
+could overcome this limitation, but this is just an example program. For
+speed there is CLC only when it is absolutely needed.
+
+The NTSC version is a bit crippled, it only covers 32 columns and thus the
+characters seem to appear from thin air. Anyway, the idea should become
+clear.
+
+
+_Want to go to the border ?_
+
+Some coders are always trying to get all effects ever done using the C64 go
+to the border, and even successfully. The easiest way is to use only a region
+of 21 pixels high - sprites - and move the text exactly like in characters.
+In fact only the different addressing causes the differences in the code.
+
+Eight horizontally expanded sprites will be just enough to fill the side
+borders. You can also mix these techiques, but then you have the usual
+"chars-in-the-screen-while-border-opened"-problems (however, they are
+solvable). Unfortunately sprite-dycp is even more slower than char-dycp.
+
+
+_More movement vertically_
+
+You might think that using the sprites will restrict the sinus to only
+14 pixels. Not really, the only restriction is that the vertical position
+difference between three consequent text character must be less than 14
+pixel lines. Each sprites' Y-coordinate will be the minimum of the three
+characters residing in that sprite. Line offsets inside the sprites
+are then obtained by subtracting the sprite y-coordinate from the character
+y-coordinate. Maybe a little hard to follow, but maybe a picture will
+clear the situation. [See picture 2.]
+
+Scrolling horizontally is easy. You just have to move sprites like you would
+use the character horizontal scroll register and after eight pixels you
+reset the sprite positions and scroll the text one position in memory.
+And of course, you fetch a new character for the scroll. When we have
+different and changing sprite y-coordinates, opening the side borders become
+a great deal more difficult. However, in this case there is at least two
+different ways to do it.
+
+
+_Stretch the sprites_
+
+The easiest way is to position all of the sprites where the scroll will
+be when it is in its highest position. Then stretch the first and last line
+of each sprite so that the 19 sprite lines in the middle will be on the
+desired place. Opening the borders now is trivial, because all of the sprites
+are present on all of the scan lines and they steal a constant amount of
+time. However, we lose two sprite lines. We might not want to use the first
+and the last line for graphics, because they are stretched.
+[See previous C=Hacking Issues for more information about stretching and
+ stolen cycles.]
+
+A more difficult approach is to unroll the routine and let another routine
+count the sprites present in each line and then change the time the routine
+uses accordingly. In this way you save time during the display for other
+effects, like color bars, because stretching will take at least 12 cycles
+on each raster line. On the other hand, if the sinus is constant (user is
+not allowed to change it), it is usually possible to embedd the count
+routine directly to the border opening part of the routine.
+
+
+_More sprites_
+
+You don't necassarily need to plot the characters in sprites to have more
+than eight characters. Using a sprite multiplexing techiques you can double
+or triple the number of sprites available. You can divide the scroll
+vertically into several areas and because the y-coordinate of the scroll
+is a sinus, there always is a fixed maximum number of sprites in each area.
+This number is always smaller than the total number of sprites in the
+whole scroll. I won't go into detail, but didn't want to leave this out
+completely. [See picture 3.]
+
+
+_Smoother and smoother_
+
+Why be satisfied with a scroll with only 40 different slices horizontally ?
+It should be possible to count own coordinates for each pixel column on
+the scroll. In fact the program won't be much different, but the routine
+must also mask the unwanted bits and write the byte to memory with ORA+STA.
+When you think about it more, it is obvious that this takes a generous amount
+of time, handling every bit seperately will take much more than eight times
+the time a simple LDA+STA takes. Some coders have avoided this by plotting
+the same character to different character sets simultaneously and then
+changing the charsets appropriately, but the resulting scroll won't be much
+larger than 96x32 pixels.
+
+--------------------------------------------------------------------------
+Picture 1 - Two character codes will make a graphical bitmap
+
+Screen memory:
+ ____________________________________
+|Char   |Char   |Char   |Char   |  ...
+|Code   |Code   |Code   |Code   |
+|0      |2      |80     |80     | .
+|       |**  ** |       |       | .
+|       |**  ** |       |       | .
+|*****  |****** |       |       |
+|****** | ****  |       |       |
+|**__**_|__**___|_______|_______|
+|**  ** |  **   | ****  |Char   |
+|**  ** |  **   |****** |Code   |
+|****** |       |**  ** |6      |
+|*****  |       |**     |       |
+|Char   |Char   |**  ** |       |
+|Code   |Code   |****** |       |
+|1      |3      |4****  |*****  |
+|_______|_______|_______|******_|
+|Char   |Char   |       |**  ** |
+|Code   |Code   |       |****** |
+|80     |80     |       |*****  |
+|       |       |       |**     |
+|       |       |Char   |**ar   |
+|       |       |Code   |Code   |
+|       |       |5      |7      |
+|_______|_______|_______|_______|
+
+Character set memory:
+
+ _________________________________________________________________
+|Char 0 |Char 1 |Char 2 |Char 3 |Char 4 |Char 5 |Char 6 |Char 7 | ...
+|_______|_______|_______|_______|_______|_______|_______|_______|__
+      DDDDDDDD      YYYYYYYY     CCCCCCCC              PPPPPPPP
+ First column    Second column   Third column    Fourth column
+
+--------------------------------------------------------------------------
+Picture 2 - DYCP with sprites
+
+Sprite 0
+ _______________________
+|       |**  ** |       |
+|       |**  ** |       |
+|       |****** |       |
+|*****  | ****  |       |
+|****** |  **   |       |
+|**  ** |  **   |       |
+|**  ** |  **   |       |
+|**__**_|_______|_______|
+|****** |       | ****  |
+|*****  |       |****** |
+|       |       |**  ** |
+|       |       |**     |
+|       |       |**  ** |
+|       |       |****** |
+|       |       | ****  |
+|_______|_______|_______| Sprite 1
+|       |       |       | _______________________
+|       |       |       ||*****  |       |       |
+|       |       |       ||****** |       |       |
+|       |       |       ||**  ** |       |       |
+|_______|_______|_______||****** |       |       |
+                         |*****  |       |       |
+                         |**     |       |       |
+                         |**     |       |       |
+                         |_______|_______|_______|
+                         |       |       |       |
+                         |       |       |       |
+                         |       |       |       |
+                         |       | ****  |       |
+                         |       | ****  |       |
+                         |       |       |****** |
+                         |       |       |****** |
+                         |_______|_______|__**___|
+                         |       |       |  **   |
+                         |       |       |  **   |
+                         |       |       |  **   |
+                         |       |       |  **   |
+                         |_______|_______|_______|
+
+--------------------------------------------------------------------------
+Picture 3 - Sprite multiplexing
+
+                               __          Set coordinates for eight sprites
+                            __|3 |         that start from the top half.
+                           |4 |  |__
+                         __|  `--|2 |
+                        |5 `--'  |  |
+                        |  |     `--'__
+                        `--'        |1 |
+                                    |  |
+                      __            `--'
+                     |6 |
+                     |  |               __
+                     `--'              |0 |
+                                       |  |
+-__------------------------------------`--'When VIC has displayed the last
+|0 |               __                      sprite, set coordinates for the
+|  |              |6 |                     sprites in the lower half of the
+`--'              |  |                     area.
+                  `--'
+    __
+   |1 |         __
+   |  |        |5 |
+   `-- __      |  |
+      |2 |   __`--'
+      |  |__|4 |                           You usually have two sprites that
+      `--|3 |  |                           are only 'used' once so that you
+         |  `--'                           can change other sprites when VIC
+         `__'                              is displaying them.
+--------------------------------------------------------------------------
+
+DYCP demo program (PAL)
+
+
+SINUS=  $CF00   ; Place for the sinus table
+CHRSET= $3800   ; Here begins the character set memory
+GFX=    $3C00   ; Here we plot the dycp data
+X16=    $CE00   ; values multiplicated by 16 (0,16,32..)
+D16=    $CE30   ; divided by 16  (16 x 0,16 x 1 ...)
+START=  $033C   ; Pointer to the start of the sinus
+COUNTER= $033D  ; Scroll counter (x-scroll register)
+POINTER= $033E  ; Pointer to the text char
+YPOS=   $0340   ; Lower 4 bits of the character y positions
+YPOSH=  $0368   ; y positions divided by 16
+CHAR=   $0390   ; Scroll text characters, multiplicated by eight
+ZP=     $FB     ; Zeropage area for indirect addressing
+ZP2=    $FD
+AMOUNT= 38      ; Amount of chars to plot-1
+PADCHAR= 32     ; Code used for clearing the screen
+
+*= $C000
+
+        SEI             ; Disable interrupts
+        LDA #$32        ; Character generator ROM to address space
+        STA $01
+        LDX #0
+LOOP0   LDA $D000,X     ; Copy the character set
+        STA CHRSET,X
+        LDA $D100,X
+        STA CHRSET+256,X
+        DEX
+        BNE LOOP0
+        LDA #$37        ; Normal memory configuration
+        STA $01
+        LDY #31
+LOOP1   LDA #66         ; Compose a full sinus from a 1/4th of a
+        CLC             ;   cycle
+        ADC SIN,X
+        STA SINUS,X
+        STA SINUS+32,Y
+        LDA #64
+        SEC
+        SBC SIN,X
+        STA SINUS+64,X
+        STA SINUS+96,Y
+        INX
+        DEY
+        BPL LOOP1
+        LDX #$7F
+LOOP2   LDA SINUS,X
+        LSR
+        CLC
+        ADC #32
+        STA SINUS+128,X
+        DEX
+        BPL LOOP2
+
+        LDX #39
+LOOP3   TXA
+        ASL
+        ASL
+        ASL
+        ASL
+        STA X16,X       ; Multiplication table (for speed)
+        TXA
+        LSR
+        LSR
+        LSR
+        LSR
+        CLC
+        ADC #>GFX
+        STA D16,X       ; Dividing table
+        LDA #0
+        STA CHAR,X      ; Clear the scroll
+        DEX
+        BPL LOOP3
+        STA POINTER     ; Initialize the scroll pointer
+        LDX #7
+        STX COUNTER
+LOOP10  STA CHRSET,X    ; Clear the @-sign..
+        DEX
+        BPL LOOP10
+
+        LDA #>CHRSET    ; The right page for addressing
+        STA ZP2+1
+        LDA #<IRQ       ; Our interrupt handler address
+        STA $0314
+        LDA #>IRQ
+        STA $0315
+        LDA #$7F        ; Disable timer interrupts
+        STA $DC0D
+        LDA #$81        ; Enable raster interrupts
+        STA $D01A
+        LDA #$A8        ; Raster compare to scan line $A8
+        STA $D012
+        LDA #$1B        ; 9th bit
+        STA $D011
+        LDA #30
+        STA $D018       ; Use the new charset
+        CLI             ; Enable interrupts and return
+        RTS
+
+IRQ     INC START       ; Increase counter
+        LDY #AMOUNT
+        LDX START
+LOOP4   LDA SINUS,X     ; Count a pointer for each text char and according
+        AND #7          ;  to it fetch a y-position from the sinus table
+        STA YPOS,Y      ;   Then divide it to two bytes
+        LDA SINUS,X
+        LSR
+        LSR
+        LSR
+        STA YPOSH,Y
+        INX             ; Chars are two positions apart
+        INX
+        DEY
+        BPL LOOP4
+
+        LDA #0
+        LDX #79
+LOOP11  STA GFX,X       ; Clear the dycp data
+        STA GFX+80,X
+        STA GFX+160,X
+        STA GFX+240,X
+        STA GFX+320,X
+        STA GFX+400,X
+        STA GFX+480,X
+        STA GFX+560,X
+        DEX
+        BPL LOOP11
+
+MAKE    LDA COUNTER     ; Set x-scroll register
+        STA $D016
+        LDX #AMOUNT
+        CLC             ; Clear carry
+LOOP5   LDY YPOSH,X     ; Determine the position in video matrix
+        TXA
+        ADC LINESL,Y    ; Carry won't be set here
+        STA ZP          ; low byte
+        LDA #4
+        ADC LINESH,Y
+        STA ZP+1        ; high byte
+        LDA #PADCHAR    ; First clear above and below the char
+        LDY #0          ; 0. row
+        STA (ZP),Y
+        LDY #120        ; 3. row
+        STA (ZP),Y
+        TXA             ; Then put consecuent character codes to the places
+        ASL             ;  Carry will be cleared
+        ORA #$80	; Inverted chars
+        LDY #40         ; 1. row
+        STA (ZP),Y
+        ADC #1          ; Increase the character code, Carry won't be set
+        LDY #80         ; 2. row
+        STA (ZP),Y
+
+        LDA CHAR,X      ; What character to plot ? (source)
+        STA ZP2         ;  (char is already multiplicated by eight)
+        LDA X16,X       ; Destination low byte
+        ADC YPOS,X      ;  (16*char code + y-position's 3 lowest bits)
+        STA ZP
+        LDA D16,X       ; Destination high byte
+        STA ZP+1
+
+        LDY #6          ; Transfer 7 bytes from source to destination
+        LDA (ZP2),Y : STA (ZP),Y
+        DEY             ; This is the fastest way I could think of.
+        LDA (ZP2),Y : STA (ZP),Y
+        DEY
+        LDA (ZP2),Y : STA (ZP),Y
+        DEY
+        LDA (ZP2),Y : STA (ZP),Y
+        DEY
+        LDA (ZP2),Y : STA (ZP),Y
+        DEY
+        LDA (ZP2),Y : STA (ZP),Y
+        DEY
+        LDA (ZP2),Y : STA (ZP),Y
+        DEX
+        BPL LOOP5	; Get next char in scroll
+
+        LDA #1
+        STA $D019       ; Acknowledge raster interrupt
+
+        DEC COUNTER     ; Decrease the counter = move the scroll by 1 pixel
+        BPL OUT
+LOOP12  LDA CHAR+1,Y    ; Move the text one position to the left
+        STA CHAR,Y      ;  (Y-register is initially zero)
+        INY
+        CPY #AMOUNT
+        BNE LOOP12
+        LDA POINTER
+        AND #63         ; Text is 64 bytes long
+        TAX
+        LDA SCROLL,X    ; Load a new char and multiply it by eight
+        ASL
+        ASL
+        ASL
+        STA CHAR+AMOUNT ; Save it to the right side
+        DEC START       ; Compensation for the text scrolling
+        DEC START
+        INC POINTER     ; Increase the text pointer
+        LDA #7
+        STA COUNTER     ; Initialize X-scroll
+
+OUT     JMP $EA7E       ; Return from interrupt
+
+SIN     BYT 0,3,6,9,12,15,18,21,24,27,30,32,35,38,40,42,45
+        BYT 47,49,51,53,54,56,57,59,60,61,62,62,63,63,63
+                        ; 1/4 of the sinus
+
+LINESL  BYT 0,40,80,120,160,200,240,24,64,104,144,184,224
+        BYT 8,48,88,128,168,208,248,32
+
+LINESH  BYT 0,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,2,3
+
+SCROLL  SCR "THIS@IS@AN@EXAMPLE@SCROLL@FOR@"
+        SCR "COMMODORE@MAGAZINE@BY@PASI@OJALA@@"
+                        ; SCR will convert text to screen codes
+
