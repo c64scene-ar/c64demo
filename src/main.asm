@@ -4,11 +4,10 @@
 main:
     sei         // set interrupt disable flag
 
+    jsr music.init      // init music routine now
     jsr init_screen     // clear the screen
     jsr init_text       // write lines of text
     jsr init_bitmap
-    
-    jsr music.init     // init music routine now
 
     ldy #$7f    // $7f = %01111111
     sty $dc0d   // Turn off CIAs Timer interrupts ($7f = %01111111)
