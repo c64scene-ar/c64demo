@@ -2,6 +2,8 @@
 // .efo header
 //============================================================
 
+.pc = $0 ".efo header"
+
 .var prepare = 0
 .var setup = 0
 .var interrupt = 0
@@ -19,8 +21,18 @@
 .word callmusic       // location of playroutine call
 
 // tags
-.byte 0               // end-of-tags
+//.byt "P", $04, $07    // range of pages in use
+//.byt "I",$10,$1f      // range of pages inherited
+//.byt "Z",$02,$03      // range of zero-page addresses in use
+//.byt "S"              // i/o safe
+//.byt "X"              // avoid loading
+//.byt "M",<play,>play  // install music playroutine
+.byte 0                 // end-of-tags
 
+.word load_addr
+
+.pc = $c000 "Main"
+load_addr:
 
 //============================================================
 // load resource files
