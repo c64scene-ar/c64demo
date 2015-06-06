@@ -1,23 +1,17 @@
-SRC_DIR=./
-BIN_DIR=./
+KICKASS_PATH=../../../vendor/KickAss.jar
+SPINDLE_DIR=../../../vendor/spindle-1.0/spindle
+MKPEF=$(SPINDLE_DIR)/mkpef
+PEF2PRG=$(SPINDLE_DIR)/pef2prg
 
-SOURCES=$(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/**/*.asm)
-SYMBOLS=$(patsubst %.asm,%.sym,$(SOURCES))
-PRG=$(BIN_DIR)/demo.prg
-CT=$(SRC_DIR)/res/demo.ct
-SID=$(patsubst %.ct,%.sid,$(CT))
+SOURCES=$(wildcard *.asm)
 
-$(PRG): $(SRC_DIR)/index.asm $(SOURCES)
-	java -jar vendor/KickAss.jar $< -o $@ -libdir $(SRC_DIR)/ -showmem -symbolfile
+all: fx.pef fx.prg
 
-sid: $(SID)
-$(SID): $(CT)
-	vendor/ct2util sid $< -o $@
+fx.efo: index.asm $(SOURCES)
+	java -jar $(KICKASS_PATH) $< -o $@ -showmem -symbolfile
 
-run: $(PRG) $(SID)
-	x64 $(PRG)
+fx.pef: fx.efo
+	${MKPEF} -o $@ $^
 
-clean:
-	@rm -f $(PRG) $(SYMBOLS)
-
-.PHONY: run sid clean
+%.prg: %.pef
+	${PEF2PRG} -o $@ $<
