@@ -2,3 +2,7 @@ bin
 build
 .DS_Store
 *.sym
+vendor/spindle-1.0/*
+c64demo.sublime-project
+c64demo.sublime-workspace
+vendor/spindle-1.0/spindle/disk.o

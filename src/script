@@ -1,0 +1,7 @@
+# add your scenes in the order you want ame0
+
+scenes/peron/scene_peron.pef	-
+music/music.pef			-
+#ecmplasma/ecmplasma.pef	ed = 0b
+#lft/lft.pef			space
+-				-
