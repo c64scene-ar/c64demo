@@ -1,24 +1,29 @@
-// TODO: Add .efo header
-// TODO: Define routines needed by Spindle for this to run
-
 //============================================================
-// Based on Dustlayer's examples:
-// Dustlayer WHQ: http://dustlayer.com
+// .efo header
 //============================================================
 
-//============================================================
-// index file which loads all source code and resource files
-//============================================================
+.var prepare = 0
+.var setup = 0
+.var interrupt = 0
+.var fadeout = 0
+.var cleanup = 0
+.var callmusic = 0
+
+.text "EFO2"          // fileformat magic
+.word prepare         // prepare routine
+.word setup           // setup routine
+.word interrupt       // irq handler
+.word main            // main routine
+.word fadeout         // fadeout routine
+.word cleanup         // cleanup routine
+.word callmusic       // location of playroutine call
+
+// tags
+.byte 0               // end-of-tags
+
 
 //============================================================
-//    specify output file
-//============================================================
-
-//.filenamespace lala
-//:BasicUpstart2(main)
-
-//============================================================
-// load resource files (for this small intro its just the sid)
+// load resource files
 //============================================================
 
 //.import source "res/load_resources.asm"
@@ -51,4 +56,3 @@
 //============================================================
 
 .import source "main.asm"
-
