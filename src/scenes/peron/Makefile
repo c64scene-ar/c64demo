@@ -5,12 +5,12 @@ PEF2PRG=$(SPINDLE_DIR)/pef2prg
 
 SOURCES=$(wildcard *.asm)
 
-all: fx.pef fx.prg
+all: scene_peron.pef scene_peron.prg
 
-fx.efo: index.asm $(SOURCES)
+scene_peron.efo: index.asm $(SOURCES)
 	java -jar $(KICKASS_PATH) $< -o $@ -binfile -showmem -symbolfile
 
-fx.pef: fx.efo
+scene_peron.pef: scene_peron.efo
 	${MKPEF} -o $@ $^
 
 %.prg: %.pef

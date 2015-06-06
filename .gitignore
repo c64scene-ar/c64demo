@@ -2,6 +2,10 @@ bin
 build
 .DS_Store
 *.sym
+*.prg
+*.pef
+*.efo
+*.d64
 vendor/spindle-1.0/*
 c64demo.sublime-project
 c64demo.sublime-workspace
