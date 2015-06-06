@@ -4,7 +4,7 @@
 main:
     sei         // set interrupt disable flag
 
-    jsr music.init      // init music routine now
+    //jsr music.init      // init music routine now
     jsr init_screen     // clear the screen
     jsr init_text       // write lines of text
     jsr init_bitmap
@@ -40,7 +40,7 @@ main:
 main_loop:        
     dec $d019        // acknowledge IRQ / clear register for next interrupt
 
-    jsr music.play	  // jump to play music routine
+    //jsr music.play	  // jump to play music routine
 
     lda #$3b     // Hi-Res
     sta $d011

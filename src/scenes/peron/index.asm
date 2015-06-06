@@ -1,3 +1,6 @@
+// TODO: Add .efo header
+// TODO: Define routines needed by Spindle for this to run
+
 //============================================================
 // Based on Dustlayer's examples:
 // Dustlayer WHQ: http://dustlayer.com
@@ -12,13 +15,13 @@
 //============================================================
 
 //.filenamespace lala
-:BasicUpstart2(main)
+//:BasicUpstart2(main)
 
 //============================================================
 // load resource files (for this small intro its just the sid)
 //============================================================
 
-.import source "res/load_resources.asm"
+//.import source "res/load_resources.asm"
 
 //============================================================
 // tables and strings of data 
