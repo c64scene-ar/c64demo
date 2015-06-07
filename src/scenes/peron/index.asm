@@ -2,8 +2,6 @@
 // .efo header
 //============================================================
 
-.pc = $0
-
 .text "EFO2"          // fileformat magic
 .word prepare         // prepare routine
 .word setup           // setup routine
@@ -23,8 +21,9 @@
 .byte 0                 // end-of-tags
 
 .word load_addr
-
+.pc = $a000
 load_addr:
 .import source "init.asm"
 .import source "fx.asm"
 .import source "main.asm"
+
