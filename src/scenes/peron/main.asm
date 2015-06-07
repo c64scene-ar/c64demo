@@ -3,7 +3,9 @@
 //============================================================
 
 prepare:
-    // TODO: Init data
+    jsr init_screen     // clear the screen
+    jsr init_text       // write lines of text
+    jsr init_bitmap
     rts
 
 //============================================================
@@ -11,14 +13,6 @@ prepare:
 //============================================================
 
 setup:
-    // TODO: Init VIC and other registers
-    sei         // set interrupt disable flag
-
-    //jsr music.init      // init music routine now
-    jsr init_screen     // clear the screen
-    jsr init_text       // write lines of text
-    jsr init_bitmap
-
     ldy #$7f    // $7f = %01111111
     sty $dc0d   // Turn off CIAs Timer interrupts ($7f = %01111111)
     sty $dd0d   // Turn off CIAs Timer interrupts ($7f = %01111111)
@@ -32,16 +26,10 @@ setup:
     and #$7f    // it is basically the 9th Bit for $d012
     sta $d011   // we need to make sure it is set to zero for our intro.
 
-    lda #<interrupt   // point IRQ Vector to our custom irq routine
-    ldx #>interrupt
-    sta $314    // store in $314/$315
-    stx $315
-
     lda #$00    // trigger first interrupt at row zero
     sta $d012
 
-    cli                  // clear interrupt disable flag
-    jmp *                // infinite loop
+    rts
 
 
 //============================================================
@@ -50,8 +38,6 @@ setup:
 
 interrupt:
     dec $d019        // acknowledge IRQ / clear register for next interrupt
-
-    //jsr music.play	  // jump to play music routine
 
     lda #$3b     // Hi-Res
     sta $d011 lda #$18     // Multicolor sta $d016
