@@ -99,12 +99,13 @@ Start demo code at $3000, and place speedcode an tables
 from $8000 and up.
 
 Here is a memory map of the spindle runtime:
-        $c00-$d7f       Resident part of loader, handles serial transfer.
-        $d80-$dff       Handover area.
-        $e00-$ebf       Decruncher.
-        $ec0-$eeb       Blank effect.
-        $eec-$eff       File specification to bootstrap the first demo part.
-        $f00-$fff       Sector buffer.
+
+	$c00-$d7f       Resident part of loader, handles serial transfer.
+	$d80-$dff       Handover area.
+	$e00-$ebf       Decruncher.
+	$ec0-$eeb       Blank effect.
+	$eec-$eff       File specification to bootstrap the first demo part.
+	$f00-$fff       Sector buffer.
 
 
 
