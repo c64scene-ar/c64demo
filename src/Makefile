@@ -1,6 +1,6 @@
 PEFCHAIN=../vendor/spindle-1.0/spindle/pefchain
 
-DISK_IMG=demo.c64
+DISK_IMG=demo.d64
 
 all: $(DISK_IMG)
 
