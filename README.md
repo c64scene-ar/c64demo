@@ -91,6 +91,20 @@ nicely, and its defined like this:
 Here we'll define the memory map and important 
 memory locations for this demo
 
+Remember:
+The Spindle runtime occupies 1 kB of C64 RAM at $c00-$fff, as well as zero-page locations $f0-$f7.
+
+Spindle recommends: code from $3000 to $ffff.
+Start demo code at $3000, and place speedcode an tables 
+from $8000 and up.
+
+Here is a memory map of the spindle runtime:
+        $c00-$d7f       Resident part of loader, handles serial transfer.
+        $d80-$dff       Handover area.
+        $e00-$ebf       Decruncher.
+        $ec0-$eeb       Blank effect.
+        $eec-$eff       File specification to bootstrap the first demo part.
+        $f00-$fff       Sector buffer.
 
 
 
