@@ -1,24 +1,14 @@
-KICKASS_PATH=../../../vendor/KickAss.jar
-SPINDLE_DIR=../../../vendor/spindle-1.0/spindle
-MKPEF=$(SPINDLE_DIR)/mkpef
-PEF2PRG=$(SPINDLE_DIR)/pef2prg
+CFLAGS=-Wall
+MKPEF= ../../../vendor/spindle-1.0/spindle/mkpef
+PEF2PRG=../../../vendor/spindle-1.0/spindle/pef2prg
 
-SCENE=scene_peron
+all:			peron.pef peron.prg
 
-SOURCES=$(wildcard *.asm)
+peron.efo:		peron.asm
+			xa -o $@ $<
 
-all: $(SCENE).pef $(SCENE).prg
+peron.pef:		peron.efo # Add more files here...
+			${MKPEF} -o $@ $^
 
-$(SCENE).efo: index.asm $(SOURCES)
-	java -jar $(KICKASS_PATH) $< -o $@ -binfile -symbolfile
-
-$(SCENE).pef: $(SCENE).efo
-	${MKPEF} -o $@ $^
-
-%.prg: %.pef
-	${PEF2PRG} -o $@ $<
-
-clean:
-	@rm -f $(SCENE).* index.sym
-
-.PHONY: clean
+%.prg:			%.pef
+			${PEF2PRG} -o $@ $^
