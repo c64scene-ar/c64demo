@@ -2,11 +2,6 @@
 // .efo header
 //============================================================
 
-<<<<<<< HEAD
-=======
-.pc = $2000
-
->>>>>>> f576d5346c0ef5fe5b4c2eb6f3f7f1d7395f276d
 .text "EFO2"          // fileformat magic
 .word prepare         // prepare routine
 .word setup           // setup routine
