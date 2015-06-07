@@ -10,7 +10,7 @@ SOURCES=$(wildcard *.asm)
 all: $(SCENE).pef $(SCENE).prg
 
 $(SCENE).efo: index.asm $(SOURCES)
-	java -jar $(KICKASS_PATH) $< -o $@ -binfile -showmem -symbolfile
+	java -jar $(KICKASS_PATH) $< -o $@ -binfile -symbolfile
 
 $(SCENE).pef: $(SCENE).efo
 	${MKPEF} -o $@ $^
