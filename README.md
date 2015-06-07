@@ -20,7 +20,7 @@ in the scenes/ directory and added to src/script
 	#lft/lft.pef                    space
 	-                               -
 
-Every scene must his own Makefile, and create a .pef,
+Every scene must have his own Makefile, and create a .pef,
  .efo, and .prg files.
 Here is a sample of a Makefile that works with KickAssembler
 instead of default xa65 of spindle
