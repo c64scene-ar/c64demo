@@ -1,7 +1,6 @@
 # C64 Projects!
 
-Compile the c64 demo project with KickAssembler
-
+Compile the c64 demo project with xa65 + spindle! 
 Check the Wiki for a route map and other projects.
 
 # Documentation
@@ -22,68 +21,55 @@ in the scenes/ directory and added to src/script
 
 Every scene must have his own Makefile, and create a .pef,
  .efo, and .prg files.
-Here is a sample of a Makefile that works with KickAssembler
-instead of default xa65 of spindle
+Here is a sample of a Makefile that works with xa65
 
-	KICKASS_PATH=../../../vendor/KickAss.jar
-	SPINDLE_DIR=../../../vendor/spindle-1.0/spindle
-	MKPEF=$(SPINDLE_DIR)/mkpef
-	PEF2PRG=$(SPINDLE_DIR)/pef2prg
+CFLAGS=-Wall
+MKPEF= ../../../vendor/spindle-1.0/spindle/mkpef
+PEF2PRG=../../../vendor/spindle-1.0/spindle/pef2prg
 
-	SCENE=scene_peron
+	all:                    hello.pef hello.prg
 
-	SOURCES=$(wildcard *.asm)
+	hello.efo:              hello.asm
+				xa -o $@ $<
 
-	all: $(SCENE).pef $(SCENE).prg
+	hello.pef:              hello.efo # Add more files here...
+				${MKPEF} -o $@ $^
 
-	$(SCENE).efo: index.asm $(SOURCES)
-		java -jar $(KICKASS_PATH) $< -o $@ -binfile -showmem -symbolfile
-
-	$(SCENE).pef: $(SCENE).efo
-		${MKPEF} -o $@ $^
-
-	%.prg: %.pef
-		${PEF2PRG} -o $@ $<
-
-	clean:
-		@rm -f $(SCENE).* index.sym
-
-	.PHONY: clean
-
+	%.prg:                  %.pef
+				${PEF2PRG} -o $@ $^
 
 Every scene .asm must have a EFO header for the loader to work
 nicely, and its defined like this:
 
-	//============================================================
-	// .efo header
-	//============================================================
+		// efo header
 
-	.pc = $0 ".efo header"
+		.byte   "EFO2"          // fileformat magic
+		.word   0               // prepare routine
+		.word   setup           // setup routine
+		.word   interrupt       // irq handler
+		.word   main            // main routine
+		.word   0               // fadeout routine
+		.word   0               // cleanup routine
+		.word   0               // location of playroutine call
 
-	.text "EFO2"          // fileformat magic
-	.word prepare         // prepare routine
-	.word setup           // setup routine
-	.word interrupt       // irq handler
-	.word 0               // main routine
-	.word 0               // fadeout routine
-	.word 0               // cleanup routine
-	.word 0               // location of playroutine call
+		// tags go here
 
-	// tags
-	//.byt "P", $04, $07    // range of pages in use
-	//.byt "I",$10,$1f      // range of pages inherited
-	//.byt "Z",$02,$03      // range of zero-page addresses in use
-	//.byt "S"              // i/o safe
-	//.byt "X"              // avoid loading
-	//.byt "M",<play,>play  // install music playroutine
-	.byte 0                 // end-of-tags
+		//.byt  "P",$04,$07     // range of pages in use
+		//.byt  "I",$10,$1f     // range of pages inherited
+		//.byt  "Z",$02,$03     // range of zero-page addresses in use
+		//.byt  "S"             // i/o safe
+		//.byt  "X"             // avoid loading
+		//.byt  "M",<play,>play // install music playroutine
 
-	.word load_addr
+		.byt    0
 
-	.pc = $c000 "Main"
-	load_addr:
-	
-	// Here we start to code our nice fx
+		.word   loadaddr
+		* = $3000
+		loadaddr
+
+		setup
+		interrupt
+		main
 
 
 # Memory Map
