@@ -2,7 +2,7 @@
 // .efo header
 //============================================================
 
-.pc = $0
+.pc = $2000
 
 .text "EFO2"          // fileformat magic
 .word prepare         // prepare routine
