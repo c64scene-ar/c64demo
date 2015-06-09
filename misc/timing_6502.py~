@@ -52,7 +52,7 @@ INSTRUCTIONS = {
     M65_and : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (A) /\ M
     M65_ane : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <-[(A)\/$EE] /\ (X)/\(M)
     M65_arr : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- [(A /\ M) >> 1]
-    M65_asl : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  C <- A7, A <- (A) << 1
+    M65_asl : TimedInstruction(2, None, None, 6, 5, None, 7, None, 6, None, None, None),   #  C <- A7, A <- (A) << 1
     M65_asr : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- [(A /\ M) >> 1]
     M65_bcc : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if C=0, PC = PC + offset
     M65_bcs : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if C=1, PC = PC + offset
@@ -178,6 +178,8 @@ class MOS6502Timming(object):
         if not self.__validate_environment():
             raise MOS6502TimmingException("Current architecture is not supported.")
 
+        self.absolute_idx_x_re = compile("\$\w+,[X]", DOTALL) # Absolute Indexed X
+        self.absolute_idx_y_re = compile("\$\w+,[Y]", DOTALL) # Absolute Indexed Y
         self.zero_page_idx_ind_x_re = compile("\(\$\w+,[X]\)", DOTALL) # Zero Page Indexed Indirect X
         self.zero_page_idx_ind_y_re = compile("\(\$\w+\),[Y]", DOTALL) # Zero Page Indexed Indirect Y
         self.zero_page_idx_x_re = compile("\$\w+,[X]", DOTALL) # Zero Page Indexed X
@@ -217,23 +219,68 @@ class MOS6502Timming(object):
         if op is None:
             raise MOS6502TimmingException("No operand available.")
 
-        # Retrieve operand value according to it's type
-        if op.type == o_void:
+        #
+        # Type 1. Accumulator
+        #
+        if op.type == o_reg:
+            _type = "o_reg"
+            value = hex(op.reg)
+
+            if op.reg == 0: # A
+                return inst.accumulator
+
+        #
+        # Type 2. Implicit
+        #
+        elif op.type == o_imm:
+            _type = "o_imm"
+            value = hex(op.value)
+
+            return inst.immediate
+
+        #
+        # Type 3. Immediate
+        #
+        elif op.type == o_void:
             _type = "o_void"
             value = "-"
 
+            return inst.implied
+
+        #
+        # Type 4. Absolute
+        # Type 5. Relative
+        #
         elif op.type in [o_mem, o_far, o_near]:
             _type = "o_mem"
             value = hex(op.addr)
 
+            # TODO : Differentiate between absolute and zero page (size?)
+            return inst.absolute
+
+        #
+        # Type 6. Absolute Indexed X
+        # Type 7. Absolute Indexed Y
+        # Type 8. Zero Page Indexed X
+        # Type 9. Zero Page Indexed Y
+        #
+        # Type 11. Zero Page Indexed Indirect X
+        # Type 12. Zero Page Indexed Indirect Y
+        #
         elif op.type == o_displ:
             _type = "o_displ"
             value = "(0x%x)%x" % (op.addr, op.phrase)
 
-            if self.zero_page_idx_ind_x_re.match(str_op):
+            if self.absolute_idx_x_re.match(str_op):
+                return inst.absolute_x
+
+            elif self.absolute_idx_y_re.match(str_op):
+                return inst.absolute_y
+
+            elif self.zero_page_idx_ind_x_re.match(str_op):
                 return inst.zero_page_idx_indirect_x
 
-            elif self.zero_page_idx_indirect_y_re.match(str_op):
+            elif self.zero_page_idx_ind_y_re.match(str_op):
                 return inst.zero_page_idx_indirect_y
 
             elif self.zero_page_idx_x_re.match(str_op):
@@ -242,23 +289,17 @@ class MOS6502Timming(object):
             elif self.zero_page_idx_y_re.match(str_op):
                 return inst.zero_page_idx_y
 
-        elif op.type == o_reg:
-            _type = "o_reg"
-            value = hex(op.reg)
-
-        elif op.type == o_imm:
-            _type = "o_imm"
-            value = hex(op.value)
-
         elif op.type == o_phrase:
             _type = "o_phrase"
             value = hex(op.phrase)
 
         else:
-            _type = "Unknown"
+            _type = "Unknown (%d)" % op.type
             value = op.value
 
-        #print "%02d - type:%s value:%s" % (operand_index, _type, value)
+        # Debug information.
+        print "[+] Operand type:%s value:%s" % (_type, value)
+
         raise MOS6502TimmingException("Unknown operand type (%d) and value (%s) at 0x%X" % (
             op.type, op.value, address))
 
@@ -337,6 +378,8 @@ def main():
 
         if cycles is not None:
             print "[+] Cycles : %d" % cycles
+        else:
+            print "[+] No cycles information available."
 
     except MOS6502TimmingException, err:
         print "[-] Exception : %s" % err
