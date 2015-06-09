@@ -11,13 +11,13 @@ XA=xa
 #   - SRC: list of source files to be compiled with xa
 #   - OBJ: list of object files to be compiled into a "part effect" (.pef)
 
-SRC=$(PART).asm
+SRC=$(PART).s
 OBJ=$(PART).efo
 
 all: $(PART).pef $(PART).prg
 
 $(PART).efo: $(SRC)
-	$(XA) -o $@ $<
+	$(XA) -o $@ $^
 
 $(PART).pef: $(OBJ)
 	${MKPEF} -o $@ $^
