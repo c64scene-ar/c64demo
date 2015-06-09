@@ -4,7 +4,7 @@
 .word  0    // prepare routine
 .word  setup    // setup routine
 .word  interrupt  // irq handler
-.word  main    // main routine
+.word  0    // main routine
 .word  0    // fadeout routine
 .word  0    // cleanup routine
 .word  0    // location of playroutine call

@@ -3,10 +3,13 @@
 * = $3000
 loadaddr
 
+cc .byt 0
+
 setup
     lda  #$30
     sta  $d012
     rts
+
 interrupt
     // nominal sync code with no sprites:
     sta  int_savea+1  // 10..16
@@ -24,17 +27,12 @@ interrupt
     sty  int_savey+1
 
     // effect goes here
+    lda  cc
+    inc  cc
+    sta  $d020    // set border color
 
 int_savea  lda  #0
 int_savex  ldx  #0
 int_savey  ldy  #0
     lsr  $d019
     rti
-
-main:
-  ldx  #$01     // set X to zero (black color code)
-loop:
-  inx
-  stx  $d021    // set background color
-  stx  $d020    // set border color
-  jmp  loop
