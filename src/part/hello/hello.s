@@ -1,8 +1,5 @@
 #include "header.i"
 
-* = $3000
-loadaddr
-
 cc .byt 0
 
 setup

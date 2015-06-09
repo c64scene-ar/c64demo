@@ -2,7 +2,7 @@
 // include this file at the top of your part .s file
 
 .byt   "EFO2"    // fileformat magic
-.word  0    // prepare routine
+.word  prepare    // prepare routine
 .word  setup    // setup routine
 .word  interrupt  // irq handler
 .word  0    // main routine

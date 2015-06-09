@@ -1,5 +1,6 @@
-SCENE=peron
-#SRC=
-#OBJ=
+PART=peron
 
 include ../common.mk
+
+#SRC+=
+#OBJ+=
