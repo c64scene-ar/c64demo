@@ -193,6 +193,9 @@ class MOS6502Timming(object):
         # Fetch the instruction and then lookup the timing table for the timing.
         decoded_inst = DecodeInstruction(address)
 
+        if not decoded_inst:
+            raise MOS6502TimmingException("Unable to get decoded instruction at 0x%X" % address)
+
         # Make sure that we know the instruction being timed.
         if decoded_inst.itype not in INSTRUCTIONS:
             raise MOS6502TimmingException("Unknown instruction at 0x%X" % address)
@@ -345,24 +348,58 @@ def print_instructions():
 
         print inst_str
 
-def main():
+def usage(err=None):
+    """Print usage information and error messages if appropriate."""
+    if err:
+        print "Error : %s" % err
+
+    print "    -f <address>         Specify an address inside the function being timed."
+    print "    -i <address>         Address of the instruction being timed."
+    print "    -s <addr_start:end>  An specific address range being timed."
+    print ""
+
+def main(argv):
     print "%s v%s\n" % (__description__, __version__)
 
     try:
+        # Initialize the timing instance.
         tim = MOS6502Timming()
 
-        address = ScreenEA() # Use the cursor address
+        function_address = None
+        instruction_address = None
+        selection_addresses = None
 
-        if False:
-            print "[+] Timing function %s at 0x%X..." % (
-                tim.get_function_name(address), address)
-
-            cycles = tim.time_function(address)
+        if len(argv) <= 1:
+            usage()
+            return
+        elif len(argv) == 3:
+            if argv[1] == "-f":
+                pass
+               
+            elif argv[1] == "-i":
+                #address = int(argv
+                pass
         else:
-            print "[+] Timing instruction %s at 0x%X..." % (
-                    tim.get_mnemonic(address), address)
+            usage()
+            return
 
-            cycles = tim.time_instruction(address)
+        if function_address:
+            print "[+] Timing function %s at 0x%X..." % (
+                tim.get_function_name(function_address), function_address)
+
+            cycles = tim.time_function(function_address)
+
+        elif instruction_address:
+            print "[+] Timing instruction %s at 0x%X..." % (
+                    tim.get_mnemonic(instruction_address), instruction_address)
+
+            cycles = tim.time_instruction(instruction_address)
+
+        elif selection_addresses:
+            print "[+] Timing selection between 0x%X - 0x%X..." % (
+                    selection_addresses[0], selection_addresses[1])
+
+            cycles = tim.time_range(selection_addresses)
 
         if cycles is not None:
             print "[+] Cycles : %d" % cycles
@@ -374,4 +411,4 @@ def main():
 
 if __name__ == "__main__":
     #print_instructions()
-    main()
+    main(ARGV)
