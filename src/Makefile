@@ -1,18 +1,21 @@
-PEFCHAIN=../vendor/spindle-1.0/spindle/pefchain
+include common.mk
 
 DISK_IMG=demo.d64
 
 all: $(DISK_IMG)
 
-$(DISK_IMG): script dirart.txt music.dir scenes/peron.dir
+$(DISK_IMG): script dirart.txt part.dir
 	${PEFCHAIN} ${PEFFLAGS} -o $@ -a dirart.txt -d 2 $<
 	@echo
 
-%.dir:
+part.dir: $(wildcard part/**/*.pef)
 	make -C $(basename $@)
 
 clean:
-	@rm -f $(DISK_IMG)
-	make -C $(basename $@) clean
+	rm -f $(DISK_IMG)
+	make -C part clean
 
-.PHONY: *.dir clean
+run: $(DISK_IMG)
+	x64 $(DISK_IMG)
+
+.PHONY: part.dir clean run
