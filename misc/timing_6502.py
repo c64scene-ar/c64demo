@@ -13,7 +13,7 @@ __version__ = "0.1"
 TimedInstruction = namedtuple(
     "TimedInstruction", [
         "accumulator",              # 1
-        "implicit",                  # 2
+        "implicit",                 # 2
         "immediate",                # 3
         "absolute",                 # 4
         "zero_page",                # 5
@@ -28,38 +28,38 @@ TimedInstruction = namedtuple(
         
 
 INSTRUCTIONS = {
-    "adc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (A) + M + C
+    "adc" : TimedInstruction(None, None, 2, 4, 3, None, 4, 4, 4, None, 6, 5),   #  A <- (A) + M + C
     "anc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- A /\ M, C <- ~A7
     "and" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (A) /\ M
     "ane" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <-[(A)\/$EE] /\ (X)/\(M)
     "arr" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- [(A /\ M) >> 1]
     "asl" : TimedInstruction(2, None, None, 6, 5, None, 7, None, 6, None, None, None),   #  C <- A7, A <- (A) << 1
     "asr" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- [(A /\ M) >> 1]
-    "bcc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if C=0, PC = PC + offset
-    "bcs" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if C=1, PC = PC + offset
-    "beq" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if Z=1, PC = PC + offset
+    "bcc" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if C=0, PC = PC + offset
+    "bcs" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if C=1, PC = PC + offset
+    "beq" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if Z=1, PC = PC + offset
     "bit" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Z <- ~(A /\ M) N<-M7 V<-M6
-    "bmi" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if N=1, PC = PC + offset
-    "bne" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if Z=0, PC = PC + offset
-    "bpl" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if N=0, PC = PC + offset
-    "brk" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Stack <- PC, PC <- ($fffe)
-    "bvc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if V=0, PC = PC + offset
-    "bvs" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  if V=1, PC = PC + offset
-    "clc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  C <- 0
-    "cld" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  D <- 0
-    "cli" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  I <- 0
-    "clv" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  V <- 0
+    "bmi" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if N=1, PC = PC + offset
+    "bne" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if Z=0, PC = PC + offset
+    "bpl" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if N=0, PC = PC + offset
+    "brk" : TimedInstruction(None, 7, None, None, None, None, None, None, None, None, None, None),   #  Stack <- PC, PC <- ($fffe)
+    "bvc" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if V=0, PC = PC + offset
+    "bvs" : TimedInstruction(None, None, None, None, None, 2, None, None, None, None, None, None),   #  if V=1, PC = PC + offset
+    "clc" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  C <- 0
+    "cld" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  D <- 0
+    "cli" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  I <- 0
+    "clv" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  V <- 0
     "cmp" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  (A - M) -> NZC
     "cpx" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  (X - M) -> NZC
     "cpy" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  (Y - M) -> NZC
     "dcp" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M)-1, (A-M) -> NZC
     "dec" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M) - 1
-    "dex" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X <- (X) - 1
-    "dey" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Y <- (Y) - 1
+    "dex" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  X <- (X) - 1
+    "dey" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  Y <- (Y) - 1
     "eor" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (A) \-/ M
     "inc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M) + 1
-    "inx" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X <- (X) +1
-    "iny" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Y <- (Y) + 1
+    "inx" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  X <- (X) +1
+    "iny" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  Y <- (Y) + 1
     "isb" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M) - 1,A <- (A)-M-~C
     "jmp" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  PC <- Address
     "jmpi" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),  #  (PC <- Address)
@@ -67,11 +67,11 @@ INSTRUCTIONS = {
     "lae" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X,S,A <- (S /\ M)
     "lax" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- M, X <- M
     "lda" : TimedInstruction(None, None, 2, 4, 3, None, 4, 4, 4, None, 6, 5),   #  A <- M
-    "ldx" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X <- M
-    "ldy" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Y <- M
+    "ldx" : TimedInstruction(None, None, 2, 4, 3, None, None, 4, None, None, None, None),   #  X <- M
+    "ldy" : TimedInstruction(None, None, 2, 4, 3, None, 4, None, 4, None, None, None),   #  Y <- M
     "lsr" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  C <- A0, A <- (A) >> 1
     "lxa" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X04 <- (X04) /\ M04, A04 <- (A04) /\ M04
-    "nop" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  [no operation]
+    "nop" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  [no operation]
     "ora" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (A) V M
     "pha" : TimedInstruction(None, 3, None, None, None, None, None, None, None, None, None, None),   #  Stack <- (A)
     "php" : TimedInstruction(None, 3, None, None, None, None, None, None, None, None, None, None),   #  Stack <- (P)
@@ -81,29 +81,29 @@ INSTRUCTIONS = {
     "rol" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  C <- A7 & A <- A << 1 + C
     "ror" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  C<-A0 & A<- (A7=C + A>>1)
     "rra" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M >> 1) + (A) + C
-    "rti" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  P <- (Stack), PC <-(Stack)
-    "rts" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  PC <- (Stack)
+    "rti" : TimedInstruction(None, 6, None, None, None, None, None, None, None, None, None, None),   #  P <- (Stack), PC <-(Stack)
+    "rts" : TimedInstruction(None, 6, None, None, None, None, None, None, None, None, None, None),   #  PC <- (Stack)
     "sax" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (A) /\ (X)
     "sbc" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (A) - M - ~C
     "sbx" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X <- (X)/\(A) - M
-    "sec" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  C <- 1
-    "sed" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  D <- 1
-    "sei" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  I <- 1
+    "sec" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  C <- 1
+    "sed" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  D <- 1
+    "sei" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  I <- 1
     "sha" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (A) /\ (X) /\ (PCH+1)
     "shs" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X <- (A) /\ (X), S <- (X), M <- (X) /\ (PCH+1)
     "shx" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (X) /\ (PCH+1)
     "shy" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (Y) /\ (PCH+1)
     "slo" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M >> 1) + A + C
     "sre" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (M >> 1) \-/ A
-    "sta" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (A)
+    "sta" : TimedInstruction(None, None, None, 4, 3, None, 5, 5, 4, None, 6, 6),   #  M <- (A)
     "stx" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (X)
     "sty" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  M <- (Y)
-    "tax" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  X <- (A)
-    "tay" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Y <- (A)
+    "tax" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  X <- (A)
+    "tay" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  Y <- (A)
     "tsx" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  X <- (S)
-    "txa" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (X)
+    "txa" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  A <- (X)
     "txs" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  S <- (X)
-    "tya" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  A <- (Y)
+    "tya" : TimedInstruction(None, 2, None, None, None, None, None, None, None, None, None, None),   #  A <- (Y)
     "bbr0" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),  #  Branch if bit 0 reset
     "bbr1" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),  #  Branch if bit 1 reset
     "bbr2" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),  #  Branch if bit 2 reset
@@ -146,11 +146,6 @@ INSTRUCTIONS = {
     "bra" : TimedInstruction(None, None, None, None, None, None, None, None, None, None, None, None),   #  Branch always
     }
 
-OPERAND_EMPTY = 0
-OPERAND_IMMEDIATE = 1
-OPERAND_MEMORY = 2
-OPERAND_DISPLACEMENT = 3
-
 MODE_ACCUMULATOR = 0
 MODE_IMPLICIT = 1
 MODE_IMMEDIATE = 2
@@ -169,10 +164,8 @@ IMPLICIT_INSTRUCTIONS = [
     "brk", "nop", "rti", "rts txs", "tsx",
     "pha", "pla", "php", "plp", "clc", "sec", "cli", "sei", "clv", "cld", "sed",
     "tax", "txa", "dex", "inx", "tay", "tya", "dey", "iny"]
-
-accumulator_re = compile("\$\w+", DOTALL) # Accumulator
-
-implicit_re = compile("\#\$\w+", DOTALL) # Implicit
+RELATIVE_INSTRUCTIONS = [
+    "bpl", "bmi", "bvc", "bvs", "bcc", "bcs", "bne", "beq"]
 
 immediate_re = compile("\#\$\w+", DOTALL) # Immediate
 
@@ -180,14 +173,14 @@ absolute_re = compile("\$\w+", DOTALL) # Absolute
 
 zero_page_re = compile("\$\w+,[X]", DOTALL) # Zero page
 
-relative_re = compile("\$\w+,[X]", DOTALL) # Relative
+relative_re = compile("\*\w+,[X]", DOTALL) # Relative
 
 absolute_idx_x_re = compile("\$\w+,[X]", DOTALL) # Absolute Indexed X
 absolute_idx_y_re = compile("\$\w+,[Y]", DOTALL) # Absolute Indexed Y
+zero_page_idx_x_re = compile("\w+,[X]", DOTALL) # Zero Page Indexed X
+zero_page_idx_y_re = compile("\w+,[Y]", DOTALL) # Zero Page Indexed Y
 zero_page_idx_ind_x_re = compile("\(\$\w+,[X]\)", DOTALL) # Zero Page Indexed Indirect X
 zero_page_idx_ind_y_re = compile("\(\$\w+\),[Y]", DOTALL) # Zero Page Indexed Indirect Y
-zero_page_idx_x_re = compile("\$\w+,[X]", DOTALL) # Zero Page Indexed X
-zero_page_idx_y_re = compile("\$\w+,[Y]", DOTALL) # Zero Page Indexed Y
 
 
 class DecodedInstructionException(Exception):
@@ -209,58 +202,82 @@ class DecodedInstruction(object):
 
     def _set_operand_info(self):
         """Set operand type and other related information."""
-        print ">>>", self.mnem
         #
         # Type 1. Accumulator
         #
         if len(self.operand_str) == 0 and self.mnem in ACCUMULATOR_INSTRUCSTIONS:
-            self.operand_type = OPERAND_EMPTY
             self.mode = MODE_ACCUMULATOR
 
         #
         # Type 2. Implicit
         #
         elif len(self.operand_str) == 0 and self.mnem in IMPLICIT_INSTRUCTIONS:
-            self.operand_type = OPERAND_EMPTY
             self.mode = MODE_IMPLICIT
 
         #
         # Type 3. Immediate
         #
-        #elif operand_type == OPERAND_IMMEDIATE:
-        #    return inst.implicit
+        elif immediate_re.match(self.operand_str):
+            self.mode = MODE_IMMEDIATE
 
-        ## Type 4. Absolute
-        ## Type 5. Relative
-        #elif operand_type in OPERAND_MEMORY:
+        #
+        # Type 5. Relative
+        #
+        elif len(self.operand_str) > 0 and self.mnem in RELATIVE_INSTRUCTIONS:
+            self.mode = MODE_RELATIVE
 
-        #    # TODO : Differentiate between absolute and zero page (size?)
-        #    return inst.absolute
+        #
+        # Type 6. Zero Page
+        #
+        elif len(self.operand_str) > 0 and self.operand_str.startswith("zp_"):
+            self.mode = MODE_ZERO_PAGE
 
-        #elif operand_type == OPERAND_DISPLACEMENT:
-        #    # Type 6. Absolute Indexed X
-        #    if absolute_idx_x_re.match(decoded_inst.operand_str):
-        #        return inst.absolute_x
+        elif len(self.operand_str.split(",")) == 2:
+            #
+            # Type 6. Absolute Indexed X
+            #
+            if absolute_idx_x_re.match(self.operand_str):
+                self.mode = MODE_ABOLUTE_INDEXED_X
 
-        #    # Type 7. Absolute Indexed Y
-        #    elif absolute_idx_y_re.match(decoded_inst.operand_str):
-        #        return inst.absolute_y
+            #
+            # Type 7. Absolute Indexed Y
+            #
+            elif absolute_idx_y_re.match(self.operand_str):
+                self.mode = MODE_ABOLUTE_INDEXED_Y
 
-        #    # Type 8. Zero Page Indexed X
-        #    elif zero_page_idx_ind_x_re.match(decoded_inst.operand_str):
-        #        return inst.zero_page_idx_indirect_x
+            #
+            # Type 8. Zero Page Indexed X
+            #
+            elif zero_page_idx_x_re.match(self.operand_str):
+                self.mode = MODE_ZERO_PAGE_INDEXED_X
 
-        #    # Type 9. Zero Page Indexed Y
-        #    elif zero_page_idx_ind_y_re.match(decoded_inst.operand_str):
-        #        return inst.zero_page_idx_indirect_y
+            #
+            # Type 9. Zero Page Indexed Y
+            #
+            elif zero_page_idx_y_re.match(self.operand_str):
+                self.mode = MODE_ZERO_PAGE_INDEXED_Y
 
-        #    # Type 11. Zero Page Indexed Indirect X
-        #    elif zero_page_idx_x_re.match(decoded_inst.operand_str):
-        #        return inst.zero_page_idx_x
+            #
+            # Type 11. Zero Page Indexed Indirect X
+            #
+            elif zero_page_idx_ind_x_re.match(self.operand_str):
+                self.mode = MODE_ZERO_PAGE_INDEXED_INDIRECT_X
 
-        #    # Type 12. Zero Page Indexed Indirect Y
-        #    elif zero_page_idx_y_re.match(decoded_inst.operand_str):
-        #        return inst.zero_page_idx_y
+            #
+            # Type 12. Zero Page Indexed Indirect Y
+            #
+            elif zero_page_idx_ind_y_re.match(self.operand_str):
+                self.mode = MODE_ZERO_PAGE_INDEXED_INDIRECT_Y
+
+            else:
+                raise DecodedInstructionException("Invalid indexed instruction operand %s" % self.operand_str)
+
+        #
+        # Type 4. Absolute
+        #
+        elif len(self.operand_str) > 0:
+            self.mode = MODE_ABSOLUTE
+
         else:
             raise DecodedInstructionException("Invalid operand %s" % self.operand_str)
 
@@ -351,82 +368,86 @@ class MOS6502Timming(object):
 
         # Obtain the instruction timing information, determine the addressing mode and return its timing value.
         inst = INSTRUCTIONS[decoded_inst.mnem]
+        cycles = None
 
         if decoded_inst.mode == MODE_ACCUMULATOR:
             if inst.accumulator is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Accumulator' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.accumulator
+            cycles = inst.accumulator
 
         elif decoded_inst.mode == MODE_IMPLICIT:
             if inst.implicit is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Implicit' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.implicit
+            cycles = inst.implicit
 
         elif decoded_inst.mode == MODE_IMMEDIATE:
             if inst.immediate is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Immediate' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.immediate
+            cycles = inst.immediate
 
         elif decoded_inst.mode == MODE_ABSOLUTE:
             if inst.absolute is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Absolute' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.absolute
+            cycles = inst.absolute
 
         elif decoded_inst.mode == MODE_ZERO_PAGE:
             if inst.zero_page is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Zero Page' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.zero_page
+            cycles = inst.zero_page
 
         elif decoded_inst.mode == MODE_RELATIVE:
             if inst.relative is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Relative' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.relative
+            cycles = inst.relative
 
         elif decoded_inst.mode == MODE_ABOLUTE_INDEXED_X:
             if inst.absolute_x is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Absolute Indexed X' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.absolute_x
+            cycles = inst.absolute_x
 
         elif decoded_inst.mode == MODE_ABOLUTE_INDEXED_Y:
             if inst.absolute_y is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Absolute Indexed Y' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.absolute_y
+            cycles = inst.absolute_y
 
         elif decoded_inst.mode == MODE_ZERO_PAGE_INDEXED_X:
             if inst.zero_page_idx_x is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Zero Page Indexed X' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.zero_page_idx_x
+            cycles = inst.zero_page_idx_x
 
         elif decoded_inst.mode == MODE_ZERO_PAGE_INDEXED_Y:
             if inst.zero_page_idx_y is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Zero Page Indexed Y' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.zero_page_idx_y
+            cycles = inst.zero_page_idx_y
 
         elif decoded_inst.mode == MODE_ZERO_PAGE_INDEXED_INDIRECT_X:
             if inst.zero_page_idx_indirect_x is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Zero Page Indexed indirect X' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.zero_page_idx_indirect_x
+            cycles = inst.zero_page_idx_indirect_x
 
         elif decoded_inst.mode == MODE_ZERO_PAGE_INDEXED_INDIRECT_Y:
             if inst.zero_page_idx_indirect_y is None:
                 raise MOS6502TimmingException(
                     "Addressing mode 'Zero Page Indexed Indexed Y' not available for instruction '%s'" % decoded_inst.mnem)
-            return inst.zero_page_idx_indirect_y
+            cycles = inst.zero_page_idx_indirect_y
 
-        raise MOS6502TimmingException(
-            "Unknown operand type (%d): %s" % (
-            decoded_inst.operand_type, decoded_inst.operand_str))
+        if not cycles:
+            raise MOS6502TimmingException(
+                "Unknown operand type (%d): %s" % (
+                decoded_inst.operand_type, decoded_inst.operand_str))
+
+        return (decoded_inst, cycles)
 
 def main():
     print "%s v%s\n" % (__description__, __version__)
@@ -438,26 +459,33 @@ def main():
         asm = """
                 ASL                     ; accumulator
                 TXA                     ; implicit
-                LDA     #$22 ; '"'      ; immediate
+                LDA     #$1BF ; '"'     ; immediate hex
+                LDA     #%101 ; '"'     ; immediate binary
+                LDA     #567 ; '"'      ; immediate octal
                 /*
                 dsadssdf
                 */
                 // dsdsds
-                LDX     $D010           ; absolute
+                LDX     $D010           ; absolute num
+                LDX     my_label        ; absolute label
                 LDY     loc_2           ; zero page (1 byte)
                 BPL     loc_1A8         ; relative
+                BPL     *+1             ; relative
+                BPL     *-1             ; relative
                 /* dasdasdas */
                 ADC     $307A,X         ; Absolute Indexed with X
                 ADC     $307A,Y         ; Absolute Indexed with Y
                 LDA     1,X             ; Zero Page Indexed with X
-                LDA     1,Y             ; N/D
+                //LDA     1,Y             ; N/D
                 STA     ($15,X)         ; Zero Page Indexed Indirect X
                 LDA     ($15),Y         ; Zero Page Indexed Indirect Y
                 """
         cycles = tim.time_assembly(asm)
 
         if cycles is not None:
-            print "[+] Cycles : %d" % cycles
+            for idx, (inst, inst_cycles) in enumerate(cycles):
+                print "    %02d. %4s : %d" % (idx, inst.mnem, inst_cycles)
+            print "[+] Cycles : %d" % sum([i_cycles for i, i_cycles in cycles])
         else:
             print "[+] No cycles information available."
 
