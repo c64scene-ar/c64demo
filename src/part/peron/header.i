@@ -23,5 +23,5 @@
 
 .word  loadaddr
 
-* = $3000
+* = $2000
 loadaddr
