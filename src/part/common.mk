@@ -26,7 +26,7 @@ $(PART).pef: $(OBJ)
 	${PEF2PRG} -o $@ $^
 
 clean:
-	rm -f *.efo *.pef *.prg
+	rm -f *.efo *.pef $(PART).prg
 
 run: $(PART).prg
 	x64 $<
