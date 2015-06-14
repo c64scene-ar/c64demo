@@ -41,11 +41,13 @@ def do_circle(m, xc, yc, r):
         m[x][y] = int(dist)
 
 def cmp_mtx(m1, m2):
-  changes = []
+  changes = {} 
   for y in range(25):
     for x in range(40):
       if m1[x][y] != m2[x][y]:
-        changes.append(( x + y * 25, m2[x][y] ))
+        if m2[x][y] not in changes.keys():
+          changes[m2[x][y]] = []
+        changes[m2[x][y]].append(x + y * 40)
   return changes
 
 def apply_palette(m):
@@ -54,35 +56,93 @@ def apply_palette(m):
     for x in range(40):
       #m[x][y] = m[x][y] if m[x][y] < 16 else 0 
       #m[x][y] = m[x][y] if m[x][y] < 16 else 0 
-      m[x][y] = p[m[x][y]] if m[x][y] < 16 else p[16 - m[x][y]] 
+      m[x][y] = p[m[x][y]] if m[x][y] < 16 else p[15] 
 
-def serialize(changes):
-  ret = struct.pack("<H", len(changes))
-  for c in changes:
-    ret += struct.pack("<H", c[0])
-    ret += struct.pack("<B", c[1])
-  return ret
 
-prev_m = [[0 for y in range(25)] for x in range(40)] 
+#def serialize(changes):
+#  ret = struct.pack("<H", len(changes))
+#  for c in changes:
+#    ret += struct.pack("<H", c[0])
+#    ret += struct.pack("<B", c[1])
+#  return ret
+
+def serialize(changes, offset):
+  code = ""
+  for color in changes.keys():
+    code += "\xa9" + chr(color)
+    for pos in changes[color]:
+      code += "\x8d" + struct.pack("<H", offset + pos) # STA pos
+  return code
+
+
+def encode(input_string):
+    count = 1
+    prev = ''
+    lst = []
+    for character in input_string:
+        if character != prev:
+            if prev:
+                entry = (prev,count)
+                lst.append(entry)
+                #print lst
+            count = 1
+            prev = character
+        else:
+            count += 1
+    else:
+        entry = (character,count)
+        lst.append(entry)
+
+    return lst
+ 
+def add_swap(n):
+  ret = "\xa9"
+  if n % 2 == 0:
+    ret += "\x18"
+  else:
+    ret += "\x38"
+  ret += "\x8D\x18\xD0" # STA $d018
+  return ret 
+
+
+def add_until_raster0():
+  return "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
+
+m_empty = [[0 for y in range(25)] for x in range(40)] 
 full_changes = ""
 
-for i in range(0, 200):
+j = 0
+matrices = []
+for i in range(0, 4*10):
   m = [[15 for y in range(25)] for x in range(40)] 
-  #do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
+  do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
   do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10)
-  #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(atan((i-10)/50.0)) * 10)
+  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(atan((i-10)/50.0)) * 10)
   do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
-  #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
+  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
   apply_palette(m)
   if i % 4 == 0:
+    matrices.append(m)
     show_mtx(m)
-    changes = cmp_mtx(prev_m, m)
-    full_changes += serialize(changes)
+    if j > 1:
+      changes = cmp_mtx(matrices[j - 2], m)
+    else:
+      changes = cmp_mtx(m_empty, m)
+    screen_addr = 0x400 if j % 2 == 0 else 0xc00
+    full_changes += add_until_raster0()
+    full_changes += serialize(changes, screen_addr)
+    full_changes += add_swap(j)
+    j += 1
     time.sleep(0.1)
-  prev_m = m
 
 
 print Fore.WHITE + Style.NORMAL + "Effect table len: ", len(full_changes)
 #print  full_changes.encode("hex")
+
+fh = open("fx.bin", "wb")
+fh.write(full_changes)
+fh.close()
+
+
 
 
