@@ -113,13 +113,14 @@ full_changes = ""
 
 j = 0
 matrices = []
-for i in range(0, 4*10):
+for i in range(0, 4*1):
   m = [[15 for y in range(25)] for x in range(40)] 
-  do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
-  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10)
-  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(atan((i-10)/50.0)) * 10)
-  do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
-  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
+#  do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
+#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10)
+#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(atan((i-10)/50.0)) * 10)
+#  do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
+#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
+  do_circle(m, 9, 9, 10)
   apply_palette(m)
   if i % 4 == 0:
     matrices.append(m)
