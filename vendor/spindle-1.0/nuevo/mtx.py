@@ -106,23 +106,24 @@ def add_swap(n):
 
 
 def add_until_raster0():
-  return "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
+  wait_loop = "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
+  return wait_loop
 
 m_empty = [[0 for y in range(25)] for x in range(40)] 
 full_changes = ""
 
 j = 0
 matrices = []
-for i in range(0, 4*1):
+for i in range(0, 61):
   m = [[15 for y in range(25)] for x in range(40)] 
 #  do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
 #  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10)
-#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(atan((i-10)/50.0)) * 10)
-#  do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
-#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
-  do_circle(m, 9, 9, 10)
+  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, 10) # abs(atan((i-10)/50.0)) * 10)
+  #do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
+  #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
+#  do_circle(m, 9, 9, 10)
   apply_palette(m)
-  if i % 4 == 0:
+  if  i % 2 == 0:
     matrices.append(m)
     show_mtx(m)
     if j > 1:
@@ -134,7 +135,7 @@ for i in range(0, 4*1):
     full_changes += serialize(changes, screen_addr)
     full_changes += add_swap(j)
     j += 1
-    time.sleep(0.1)
+#    time.sleep(0)
 
 
 print Fore.WHITE + Style.NORMAL + "Effect table len: ", len(full_changes)

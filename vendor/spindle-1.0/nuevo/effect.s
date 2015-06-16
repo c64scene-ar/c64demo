@@ -22,7 +22,7 @@
 
 		.word	loadaddr
 
-		* = $c000
+		* = $6000
 loadaddr
 
 prepare
@@ -88,21 +88,14 @@ setup
 
 		rts
 main
-
-; effect starts here
-
+jsr prepare
 .bin 0,0,"fx.bin"
-
-
 ; effect ends here
-
 		rts                 ; 6 , deinit = 26 cycles + init (35) = 61 por default
 
 
-temp .byte 5
-counter .byte $ff
-started_flag .byte 0
-
+counter .byte 00
+counter2 .byte 00
 //         * = $6000
 //gfx
 //         .bin    0,0,"pepe.bin"
