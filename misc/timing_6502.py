@@ -5,13 +5,7 @@
 from sys import argv, exit
 from collections import namedtuple
 from re import compile, DOTALL, MULTILINE
-
-under_vim = False
-try:
-    import vim
-    under_vim = True
-except ImportError, err:
-    pass
+from fileinput import input
 
 __description__ = "Instruction timing for MOS 6502"
 __version__ = "0.1"
@@ -456,42 +450,53 @@ class MOS6502Timming(object):
 
         return (decoded_inst, cycles)
 
+def usage():
+    """Display help."""
+    print "Usage : cat my_demo.asm | %s" % argv[0]
+    print ""
+
 def main():
     print "%s v%s\n" % (__description__, __version__)
 
     try:
+        if len(argv) == 2 and argv[1] in ["-h", "--help"]:
+            usage()
+            return
+
         # Initialize the timing instance.
         tim = MOS6502Timming()
 
-        if under_vim:
-            asm = vim.current.buffer[vim.current.range.start : vim.current.range.end]
-            asm = "\n".join(asm)
-        else:
-            asm = """
-                    ASL                     ; accumulator
-                    TXA                     ; implicit
-                    LDA     #$1BF ; '"'     ; immediate hex
-                    LDA     #%101 ; '"'     ; immediate binary
-                    LDA     #567 ; '"'      ; immediate octal
-                    /*
-                    dsadssdf
-                    */
-                    // dsdsds
-                    LDX     $D010           ; absolute num
-                    LDX     my_label        ; absolute label
-                    LDY     loc_2           ; zero page (1 byte)
-                    BPL     loc_1A8         ; relative
-                    BPL     *+1             ; relative
-                    BPL     *-1             ; relative
-                    /* dasdasdas */
-                    ADC     $307A,X         ; Absolute Indexed with X
-                    ADC     $307A,Y         ; Absolute Indexed with Y
-                    LDA     1,X             ; Zero Page Indexed with X
-                    //LDA     1,Y             ; N/D
-                    STA     ($15,X)         ; Zero Page Indexed Indirect X
-                    LDA     ($15),Y         ; Zero Page Indexed Indirect Y
-                    """
+        asm = ""
 
+        for line in input():
+            asm += line
+
+        #asm = """
+        #        ASL                     ; accumulator
+        #        TXA                     ; implicit
+        #        LDA     #$1BF ; '"'     ; immediate hex
+        #        LDA     #%101 ; '"'     ; immediate binary
+        #        LDA     #567 ; '"'      ; immediate octal
+        #        /*
+        #        dsadssdf
+        #        */
+        #        // dsdsds
+        #        LDX     $D010           ; absolute num
+        #        LDX     my_label        ; absolute label
+        #        LDY     loc_2           ; zero page (1 byte)
+        #        BPL     loc_1A8         ; relative
+        #        BPL     *+1             ; relative
+        #        BPL     *-1             ; relative
+        #        /* dasdasdas */
+        #        ADC     $307A,X         ; Absolute Indexed with X
+        #        ADC     $307A,Y         ; Absolute Indexed with Y
+        #        LDA     1,X             ; Zero Page Indexed with X
+        #        //LDA     1,Y             ; N/D
+        #        STA     ($15,X)         ; Zero Page Indexed Indirect X
+        #        LDA     ($15),Y         ; Zero Page Indexed Indirect Y
+        #        """
+
+        print "[+] Performing instruction timing count..."
         cycles = tim.time_assembly(asm)
 
         if cycles is not None:
