@@ -106,24 +106,78 @@ def add_swap(n):
 
 
 def add_until_raster0():
-  wait_loop = "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
+  wait_loop = "\xA6\xFA\xE8\x86\xFA\xE0\xff\xD0\xF7\xA4\xFB" #\xC8\x84\xFB\xC0\x02\xD0\xEE"
+  wait_loop += "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
   return wait_loop
+
+def draw_bar(m, x1, x2, y, col):
+  for x in range(x1, x2):
+    m[x][y] = col
+
+def draw_bars(m, y):
+  if y in [0,1,2,3,4]:
+    draw_bar(m, 0, 6, y, 11)
+    draw_bar(m, 6, 34, y, 5)
+    draw_bar(m, 34, 40, y, 11)
+  if y == 3:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+  if y == 4:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+  if y == 5:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+  if y == 6:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+  if y == 7:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+  if y == 8:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+  if y == 9:
+    draw_bar(m, 0, 10, y, 11)
+    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 30, 40, y, 11)
+
+
+
+
+
+
+
+
+
+
+
 
 m_empty = [[0 for y in range(25)] for x in range(40)] 
 full_changes = ""
 
 j = 0
 matrices = []
-for i in range(0, 61):
-  m = [[15 for y in range(25)] for x in range(40)] 
+for i in range(0, 25):
+  m = [[0 for y in range(25)] for x in range(40)] 
 #  do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
 #  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10)
-  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, 10) # abs(atan((i-10)/50.0)) * 10)
+#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, 10) # abs(atan((i-10)/50.0)) * 10)
   #do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
   #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
 #  do_circle(m, 9, 9, 10)
-  apply_palette(m)
-  if  i % 2 == 0:
+  for asd in range(25):
+    draw_bars(m, asd)
+ 
+
+  #apply_palette(m)
+  if True or i % 2 == 0:
     matrices.append(m)
     show_mtx(m)
     if j > 1:
@@ -135,7 +189,7 @@ for i in range(0, 61):
     full_changes += serialize(changes, screen_addr)
     full_changes += add_swap(j)
     j += 1
-#    time.sleep(0)
+    #time.sleep(0.1)
 
 
 print Fore.WHITE + Style.NORMAL + "Effect table len: ", len(full_changes)

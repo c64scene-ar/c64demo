@@ -88,14 +88,26 @@ setup
 
 		rts
 main
+
+/*
+loop:
+ldx $fa
+inx
+stx $fa
+cpx #$00
+bne loop
+ldy $fb
+iny
+sty $fb
+cpy #$00
+bne loop
+*/
 jsr prepare
 .bin 0,0,"fx.bin"
 ; effect ends here
 		rts                 ; 6 , deinit = 26 cycles + init (35) = 61 por default
 
 
-counter .byte 00
-counter2 .byte 00
 //         * = $6000
 //gfx
 //         .bin    0,0,"pepe.bin"
