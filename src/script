@@ -1,6 +1,6 @@
 # add your scenes in the order you want ame0
 
-part/hello/hello.pef -
+part/luz/luz.pef -
 part/music/music.pef -
 #part/peron/peron.pef -
 #part/ecmplasma/ecmplasma.pef ed = 0b
