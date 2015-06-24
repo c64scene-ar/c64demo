@@ -26,7 +26,7 @@ setup
       dex
       bne clr_scr
 
-/*
+
 loop_text  
            lda line1,x      ; read characters from line1 table of text...
            sta $0428,x      ; ...and store in screen ram near the center
@@ -45,7 +45,7 @@ loop_text
            bne loop_text
 
 
-*/
+
 
 ;============================================================
 ; set character set pointer to our custom set, turn off 
