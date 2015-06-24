@@ -1,14 +1,9 @@
-CFLAGS=-Wall
-MKPEF=../spindle/mkpef
-PEF2PRG=../spindle/pef2prg
+PART=luz
 
-all:			part.pef part.prg
+include ../common.mk
 
-effect.efo:		effect.s
-			xa -o $@ $<
+$(PART).pef: $(OBJ) giphy34.gfx
+	${MKPEF} -o $@ $^
 
-part.pef:		effect.efo giphy34.prg
-			${MKPEF} -o $@ $^
-
-%.prg:			%.pef
-			${PEF2PRG} -o $@ $^
+#SRC=
+#OBJ=
