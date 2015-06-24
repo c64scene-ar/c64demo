@@ -24,6 +24,7 @@ interrupt
     sty  int_savey+1
 
     // effect goes here
+
     lda  cc
     inc  cc
     sta  $d020    // set border color
