@@ -28,12 +28,12 @@ def show_mtx(m):
 
   for y in range(25):
     for x in range(40):
-      cols = c64p[m[x][y]]
+      cols = c64p[m[x][y] % len(c64p)]
       sys.stdout.write( cols[0] + cols[1] + chr(219).decode('cp437')) #str(m[x][y]).zfill(2),
       sys.stdout.write( cols[0] + cols[1] + chr(219).decode('cp437')) #str(m[x][y]).zfill(2),
     print ""
 
-def do_circle(m, xc, yc, r):
+def do_circle(m, xc, yc, r, color_offset):
   for y in range(25):
     for x in range(40):
       dist = sqrt((y-yc)**2 + (x-xc)**2)
@@ -52,11 +52,19 @@ def cmp_mtx(m1, m2):
 
 def apply_palette(m):
   p = [1,1,15,15,10,10,12,12,4,4,4,4,11,11,0,0]
+
+  #p = [1,1,15,15,10,10,12,12,4,4,4,4,11,11,0,0]
+  #p = [1,2,3,4,0,6,0,4,3,2,1]
+
+  #p = [0,10,3,12,0,14,0,4,0,2,0]
+
+  #p = [5,0,0,13,0,0,5,0,0,13,0,0,11,0,0,0,4,0,0,0,0,11,0,0,0,1]
   for y in range(25):
     for x in range(40):
       #m[x][y] = m[x][y] if m[x][y] < 16 else 0 
       #m[x][y] = m[x][y] if m[x][y] < 16 else 0 
-      m[x][y] = p[m[x][y]] if m[x][y] < 16 else p[15] 
+      #m[x][y] = p[m[x][y]] if m[x][y] < 16 else p[15] 
+      m[x][y] = p[m[x][y] % len(p)] 
 
 
 #def serialize(changes):
@@ -104,10 +112,12 @@ def add_swap(n):
   ret += "\x8D\x18\xD0" # STA $d018
   return ret 
 
-
 def add_until_raster0():
-  wait_loop = "\xA6\xFA\xE8\x86\xFA\xE0\xff\xD0\xF7\xA4\xFB" #\xC8\x84\xFB\xC0\x02\xD0\xEE"
+  cnt1 = 0xff
+  cnt2 = 0x35
+  wait_loop = "\xA6\xFA\xE8\x86\xFA\xE0" + chr(cnt1) + "\xD0\xF7\xA4\xFB\xC8\x84\xFB\xC0" + chr(cnt2) + "\xD0\xEE\xa9\x00\x85\xfa\x85\xfb"
   wait_loop += "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
+  #wait_loop += "\xea\xea\xea\xea"
   return wait_loop
 
 def draw_bar(m, x1, x2, y, col):
@@ -129,7 +139,7 @@ def draw_bars(m, y):
     draw_bar(m, 30, 40, y, 11)
   if y == 5:
     draw_bar(m, 0, 10, y, 11)
-    draw_bar(m, 10, 30, y, 5)
+    draw_bar(m, 10, 30, y, 6)
     draw_bar(m, 30, 40, y, 11)
   if y == 6:
     draw_bar(m, 0, 10, y, 11)
@@ -149,35 +159,26 @@ def draw_bars(m, y):
     draw_bar(m, 30, 40, y, 11)
 
 
-
-
-
-
-
-
-
-
-
-
 m_empty = [[0 for y in range(25)] for x in range(40)] 
 full_changes = ""
 
 j = 0
 matrices = []
-for i in range(0, 25):
-  m = [[0 for y in range(25)] for x in range(40)] 
-#  do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10)
-#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10)
-#  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, 10) # abs(atan((i-10)/50.0)) * 10)
-  #do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10)
-  #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(cos(i/50.0)) * 10)
-#  do_circle(m, 9, 9, 10)
-  for asd in range(25):
-    draw_bars(m, asd)
+for i in range(0, 53):
+  m = [[15 for y in range(25)] for x in range(40)] 
+ # do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10,i)
+  #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10,i)
+  do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, 10,i) # abs(atan((i-10)/50.0)) * 10)
+ # do_circle(m, sin(i/10.0)*10+20, cos(i/10.0)*10+10, abs(atan(i/50.0)) * 10,i)
+
+#  do_circle(m, cos(i/2.0)*5+20, sin(i/2.0)*5+10, abs(cos(i/20.0)) * 20)
+  #do_circle(m, 23, 15, 5, 5)
+  #for asd in range(25):
+  #  draw_bars(m, asd)
  
 
   #apply_palette(m)
-  if True or i % 2 == 0:
+  if  i % 4 == 0:
     matrices.append(m)
     show_mtx(m)
     if j > 1:
@@ -185,11 +186,24 @@ for i in range(0, 25):
     else:
       changes = cmp_mtx(m_empty, m)
     screen_addr = 0x400 if j % 2 == 0 else 0xc00
-    full_changes += add_until_raster0()
+    print j, hex(screen_addr)
     full_changes += serialize(changes, screen_addr)
+    full_changes += add_until_raster0()
     full_changes += add_swap(j)
+
     j += 1
     #time.sleep(0.1)
+
+for x in range(2):
+  changes = cmp_mtx(matrices[j - x - 2], matrices[0+x])
+  screen_addr = 0x400 if j % 2 == 0 else 0xc00
+  print Fore.WHITE + Style.NORMAL
+  print j, hex(screen_addr)
+  print changes
+  full_changes += serialize(changes, screen_addr)
+  full_changes += add_until_raster0()
+  full_changes += add_swap(j)
+  j += 1
 
 
 print Fore.WHITE + Style.NORMAL + "Effect table len: ", len(full_changes)

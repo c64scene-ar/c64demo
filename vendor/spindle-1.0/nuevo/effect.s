@@ -68,8 +68,6 @@ clearcolor
                 inx
                 bne     clearcolor
 
-
-
 setup
                 lda     #$38  // screen ram = 400, bitmap 2000
                 sta     $d018 
@@ -86,8 +84,12 @@ setup
 		lda	#$00  // border color
                 sta     $d020
 
+                sta $fa
+                sta $fb
+
 		rts
 main
+
 
 /*
 loop:
@@ -102,7 +104,7 @@ sty $fb
 cpy #$00
 bne loop
 */
-jsr prepare
+//jsr prepare
 .bin 0,0,"fx.bin"
 ; effect ends here
 		rts                 ; 6 , deinit = 26 cycles + init (35) = 61 por default
