@@ -10,3 +10,13 @@ vendor/spindle-1.0/*
 c64demo.sublime-project
 c64demo.sublime-workspace
 vendor/spindle-1.0/spindle/disk.o
+*.py~
+
+# IDA Pro Databases/Working Files
+*.idb
+*.id0
+*.id1
+*.nam
+*.til
+
+*.swp
