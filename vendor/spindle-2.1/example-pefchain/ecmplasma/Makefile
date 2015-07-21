@@ -1,5 +1,5 @@
 CFLAGS=-Wall
-LDFLAGS=-lm
+LDLIBS=-lm
 XA=xa
 MKPEF=../../spindle/mkpef
 PEF2PRG=../../spindle/pef2prg
