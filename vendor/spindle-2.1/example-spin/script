@@ -1,0 +1,31 @@
+
+# First part contains the master demo routine and the music.
+# Spindle automatically jumps to the load address of the first file listed
+# here, unless you specify an entry point with the -e option.
+
+demo.prg
+Specular_Highlight.sid		1000	7e
+
+# Each of the following parts consists of a Koala picture.
+
+# We extract the different parts of the file (bitmap, video matrix and colour
+# RAM) and load them directly to their respective target addresses. The "!"
+# indicates that this part should be written directly into I/O space, and hence
+# colour RAM. Without the exclamation mark, the data would go into shadow RAM. 
+
+# Admittedly, it is a bit silly to also load the background colour in this way.
+
+pic1.kla			6000	2	1f40
+pic1.kla			4000	1f42	3e8
+pic1.kla			d800!	232a	3e8
+pic1.kla			d021!	2712	1
+
+pic2.kla			6000	2	1f40
+pic2.kla			4000	1f42	3e8
+pic2.kla			d800!	232a	3e8
+pic2.kla			d021!	2712	1
+
+pic3.kla			6000	2	1f40
+pic3.kla			4000	1f42	3e8
+pic3.kla			d800!	232a	3e8
+pic3.kla			d021!	2712	1
