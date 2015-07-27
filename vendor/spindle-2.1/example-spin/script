@@ -15,10 +15,11 @@ Specular_Highlight.sid		1000	7e
 
 # Admittedly, it is a bit silly to also load the background colour in this way.
 
-pic1.kla			6000	2	1f40
-pic1.kla			4000	1f42	3e8
-pic1.kla			d800!	232a	3e8
-pic1.kla			d021!	2712	1
+pungas.kla			6000	2	1f40
+pungas.kla			4000	1f42	3e8
+pungas.kla			d800!	232a	3e8
+pungas.kla			d021!	2712	1
+
 
 pic2.kla			6000	2	1f40
 pic2.kla			4000	1f42	3e8

@@ -4,7 +4,7 @@
 zp_dest		=	$f6
 
 loaderorg	=	$0c00
-sectorbuf	=	$0e00
+sectorbuf	=	$0f00
 
 		.word	basicstub
 		*=$801
@@ -60,9 +60,12 @@ loop
 		sta	loaderorg,x
 		lda	loadersrc+$100,x
 		sta	loaderorg+$100,x
+		lda	loadersrc+$200,x
+		sta	loaderorg+$200,x
 		inx
 		bne	loop
 		.)
+
 
 		; Wait for drive to signal MORE.
 
@@ -229,13 +232,12 @@ loadfile
 no_initial_eof
 mainloop
 		; Poll for the next block or EOF.
-
 		bit	$dd00
 		bvc	eof_detected
 
 		bmi	mainloop		; WAIT -> no block yet
 
-		; MORE -> request transmission
+ 		; MORE -> request transmission
 		jsr	atnbrief
 		; First bit pair on the bus 40 cycles after atn pulled (13 cycles after released)
 		.byt	$4b,0			; clear a and carry
@@ -246,16 +248,20 @@ eof_detected
 		bit	$dd00
 		bmi	alldone
 
-		; Send ack, then rts
+                nop
+                nop
+
+		; Send ack, then rts ; ACA ESTA TIMEADO
 atnbrief
-		lda	#8
+		lda	#8         ; 2
 atnrelease
-		sta	$dd00
-		jsr	wait12
-		eor	#8
-		beq	atnrelease
+		sta	$dd00      ; 4
+		jsr	wait12     ; 6 + 6
+		eor	#8         ; 2
+		beq	atnrelease ; 2 o 3
 alldone
 wait12
+            ;    nop
 		rts
 
 		.dsb	loaderorg+$c0-*, $88
@@ -267,41 +273,63 @@ wait12
 
 		; $0cd0
 recvloop
+                nop
+                nop
+
 		ldy	#0
 		ldx	$dd00			; second bit pair
 		sty	$dd00
+
 		eor	loaderorg+SHUF2,x
+
 		inc	mod_recvdest+1		; two cycles too much here
+                
+                nop
+                nop
+
 		ldy	#8
 		ldx	$dd00			; third bit pair
 		sty	$dd00
 		eor	loaderorg+SHUF3,x
+
+                nop
+                nop
+
 		ldy	#0
 		cpy	mod_recvdest+1		; carry set if lsb == 0
 		ldx	$dd00			; fourth bit pair
 		sty	$dd00
+
 		eor	loaderorg+SHUF4,x
 mod_recvdest	sta	sectorbuf
 receive						; clc before entering loop
+                nop
+                nop
+
 		ldy	#8
 		ldx	$dd00			; first bit pair
 		sty	$dd00
 		eor	loaderorg+SHUF1,x
+
 		bcc	recvloop		; the page crossing is important
 
 		; Receive checksum byte
+                nop
 
-		nop
 		ldy	#0
 		ldx	$dd00			; second bit pair
 		sty	$dd00
+
 		eor	loaderorg+SHUF2,x
+
 		nop
-		nop
+                nop
+
 		ldy	#8
 		ldx	$dd00			; third bit pair
 		sty	$dd00
 		eor	loaderorg+SHUF3,x
+
 		cmp	(0,x)
 		ldx	$dd00			; fourth bit pair
 		eor	loaderorg+SHUF4,x
@@ -310,13 +338,28 @@ receive						; clc before entering loop
 
 		beq	sumok
 
+                nop
+                nop
+
 		ldy	#$30			; pull data and clock, release atn (nak)
 		sty	$dd00
 		jsr	wait12
+
+                nop
+                nop
+
 		ldy	#$00
 		sty	$dd00			; release all
+
+                nop
+                nop
+
 		jmp	mainloop
 sumok
+
+                nop
+                nop
+
 		ldy	#$00
 		sty	$dd00			; release all (ack)
 

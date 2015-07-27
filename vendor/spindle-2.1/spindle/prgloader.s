@@ -79,8 +79,12 @@ pagedone
 done
 		inc	1
 
+                nop
+                nop
+
 		lda	#$00
 		sta	$dd00
+                
 		lda	#$3c
 		sta	$dd02
 

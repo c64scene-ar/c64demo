@@ -22,8 +22,9 @@
 
 		.word	loadaddr
 
-		* = $6000
+		* = $8000
 loadaddr
+
 
 prepare
                 .(
@@ -37,10 +38,10 @@ setup_buffer
 	//	lda     $4140,Y
 	//	lda     $4240,Y
                 lda     #$00    // was 0x02
-         	sta     $c00,Y
-		sta     $d00,Y
-		sta     $e00,Y
-		sta     $f00,Y
+         	sta     $4c00,Y
+		sta     $4d00,Y
+		sta     $4e00,Y
+		sta     $4f00,Y
 		iny
 		bne     setup_buffer
                 .)
@@ -49,10 +50,10 @@ setup_buffer
                 ldy     #$00
 setup_buffer
                 lda     #$00 // was 0x02
-         	sta     $400,Y
-		sta     $500,Y
-		sta     $600,Y
-		sta     $700,Y
+         	sta     $4400,Y
+		sta     $4500,Y
+		sta     $4600,Y
+		sta     $4700,Y
 		iny
 		bne     setup_buffer
                 .)
@@ -67,13 +68,18 @@ clearcolor
                 sta     $DB00,x
                 inx
                 bne     clearcolor
+    ;            rts
 
 setup
-                lda     #$38  // screen ram = 400, bitmap 2000
+                lda     #$3d
+                sta     $dd02
+
+                lda     #$38  // screen ram = 400, bitmap 0000 (from vic)
                 sta     $d018 
 
                 lda     #$38  // bitmap mode, screen on, 25 rows (tall) 
-                sta     $d011
+              //  lda     #$60
+		sta     $d011
 
                 lda     #$08  // bitmap singlecolor, 40 cols (wide)
                 sta     $d016
@@ -89,7 +95,6 @@ setup
 
 		rts
 main
-
 
 /*
 loop:

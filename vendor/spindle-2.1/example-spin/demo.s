@@ -32,13 +32,14 @@ entry
 	sta	$d018
 	lda	#$18
 	sta	$d016
-	lda	#$0
+	lda	#$1
 	sta	$d020
 
 	; Load the first picture.
 
 	jsr	$c90
 
+        ;jmp disablebot
 	; Wait for space, then load the next picture, etc.
 
 	jsr	wait4space
@@ -50,7 +51,45 @@ entry
 
 	jmp	*
 
-wait4space
+  
+disablebot:
+
+;l1:
+;  bit $d011
+;  bpl l1
+;l2:
+;  bit $d011
+;  bmi l2
+;  lda #$1b
+;  sta $d011
+;  lda #$00
+;  sta $3fff
+
+wait_f9:
+  ;sei
+  lda #$fa
+wait_f9_loop:
+  cmp $d012
+  bne wait_f9_loop
+
+  lda $d011
+  and #$f7
+  sta $d011
+
+wait_ff:
+  lda #$ff
+wait_ff_loop:
+  cmp $d012
+  bne wait_ff_loop
+
+  lda $d011
+  ora #$08
+  sta $d011
+
+  jmp wait_f9 
+   
+
+wait4space:
 	lda	#$ff
 	sta	$dc02
 	lsr

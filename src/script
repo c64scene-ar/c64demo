@@ -1,7 +1,8 @@
 # add your scenes in the order you want ame0
 
+part/music/music.pef space
+#part/bluemax/bluemax.pef space
 part/luz/luz.pef -
-part/music/music.pef -
 #part/peron/peron.pef -
 #part/ecmplasma/ecmplasma.pef ed = 0b
 #part/lft/lft.pef space

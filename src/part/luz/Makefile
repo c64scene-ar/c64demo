@@ -1,9 +1,17 @@
-PART=luz
+CFLAGS=-Wall
+LDLIBS=-lm
+XA=xa
+MKPEF=../../../vendor/spindle-1.0/spindle/mkpef
+PEF2PRG=../../../vendor/spindle-1.0/spindle/pef2prg
 
-include ../common.mk
+all:			luz.pef luz.prg
 
-$(PART).pef: $(OBJ) giphy34.gfx
-	${MKPEF} -o $@ $^
+luz.efo:		luz.s 
+			xa -o $@ $<
 
-#SRC=
-#OBJ=
+luz.pef:		luz.efo giphy34.gfx
+			${MKPEF} -o $@ $^
+
+%.prg:			%.pef
+			${PEF2PRG} -o $@ $<
+

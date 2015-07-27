@@ -18,7 +18,7 @@
 #include "pack.h"
 
 #define FIRST_RESERVED_PAGE	0x0c
-#define LAST_RESERVED_PAGE	0x0e
+#define LAST_RESERVED_PAGE	0x0f
 #define FIRST_RESERVED_ZP	0xf4
 #define LAST_RESERVED_ZP	0xf7
 #define ADDR_LOAD		0x0c90
@@ -238,6 +238,7 @@ static void load_script(char *filename) {
 		if(!effect[i].header.nchunk) {
 			// Scripted blank effect needs a page for the driver.
 			page = LAST_RESERVED_PAGE + 1;
+                        page = 0;
 			while(
 				page < 2
 				|| (page >= 0xd0 && page <= 0xdf)

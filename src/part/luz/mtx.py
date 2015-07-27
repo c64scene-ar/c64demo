@@ -66,6 +66,10 @@ def apply_palette(m):
       #m[x][y] = p[m[x][y]] if m[x][y] < 16 else p[15] 
       m[x][y] = p[m[x][y] % len(p)] 
 
+# 4400 = screen 1
+# 4c00 = screen 2
+# 6000 = bmp (2000)
+# 8000 = code
 
 #def serialize(changes):
 #  ret = struct.pack("<H", len(changes))
@@ -114,7 +118,7 @@ def add_swap(n):
 
 def add_until_raster0():
   cnt1 = 0xff
-  cnt2 = 0x35
+  cnt2 = 0x01
   wait_loop = "\xA6\xFA\xE8\x86\xFA\xE0" + chr(cnt1) + "\xD0\xF7\xA4\xFB\xC8\x84\xFB\xC0" + chr(cnt2) + "\xD0\xEE\xa9\x00\x85\xfa\x85\xfb"
   wait_loop += "\xa9\x00\xcd\x12\xd0\xd0\xf9" # wait until rasterline == 0
   #wait_loop += "\xea\xea\xea\xea"
@@ -158,13 +162,12 @@ def draw_bars(m, y):
     draw_bar(m, 10, 30, y, 5)
     draw_bar(m, 30, 40, y, 11)
 
-
 m_empty = [[0 for y in range(25)] for x in range(40)] 
 full_changes = ""
 
 j = 0
 matrices = []
-for i in range(0, 53):
+for i in range(0, 10):
   m = [[15 for y in range(25)] for x in range(40)] 
  # do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10,i)
   #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10,i)
@@ -178,14 +181,14 @@ for i in range(0, 53):
  
 
   #apply_palette(m)
-  if  i % 4 == 0:
+  if True or  i % 4 == 0:
     matrices.append(m)
     show_mtx(m)
     if j > 1:
       changes = cmp_mtx(matrices[j - 2], m)
     else:
       changes = cmp_mtx(m_empty, m)
-    screen_addr = 0x400 if j % 2 == 0 else 0xc00
+    screen_addr = 0x4400 if j % 2 == 0 else 0x4c00
     print j, hex(screen_addr)
     full_changes += serialize(changes, screen_addr)
     full_changes += add_until_raster0()
@@ -196,7 +199,7 @@ for i in range(0, 53):
 
 for x in range(2):
   changes = cmp_mtx(matrices[j - x - 2], matrices[0+x])
-  screen_addr = 0x400 if j % 2 == 0 else 0xc00
+  screen_addr = 0x4400 if j % 2 == 0 else 0x4c00
   print Fore.WHITE + Style.NORMAL
   print j, hex(screen_addr)
   print changes
