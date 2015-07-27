@@ -1,4 +1,4 @@
-SPINDLE_DIR=../../../vendor/spindle-1.0/spindle
+SPINDLE_DIR=../../../vendor/spindle-2.1/spindle
 MKPEF=$(SPINDLE_DIR)/mkpef
 PEF2PRG=$(SPINDLE_DIR)/pef2prg
 XA=xa

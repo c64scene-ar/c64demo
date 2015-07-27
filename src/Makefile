@@ -5,7 +5,7 @@ DISK_IMG=demo.d64
 all: $(DISK_IMG)
 
 $(DISK_IMG): script dirart.txt part.dir
-	${PEFCHAIN} ${PEFFLAGS} -H 0x3 -o $@ -a dirart.txt -d 2 $<
+	${PEFCHAIN} ${PEFFLAGS} -o $@ -a dirart.txt -d 2 $<
 	@echo
 
 part.dir: $(wildcard part/**/*.pef)

@@ -150,8 +150,8 @@ irq
 		lda	#$35
 		sta	1
 irqmod
-		jsr	0
-		lsr	$d019
+		jsr	0     ; call the parameter function
+		lsr	$d019 ; ack interrupt
 
 		pla
 		sta	1

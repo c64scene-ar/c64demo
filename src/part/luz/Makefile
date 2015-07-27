@@ -1,8 +1,8 @@
 CFLAGS=-Wall
 LDLIBS=-lm
 XA=xa
-MKPEF=../../../vendor/spindle-1.0/spindle/mkpef
-PEF2PRG=../../../vendor/spindle-1.0/spindle/pef2prg
+MKPEF=../../../vendor/spindle-2.1/spindle/mkpef
+PEF2PRG=../../../vendor/spindle-2.1/spindle/pef2prg
 
 all:			luz.pef luz.prg
 

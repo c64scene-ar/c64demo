@@ -22,7 +22,7 @@
 
 		.word	loadaddr
 
-		* = $8000
+		* = $9000
 loadaddr
 
 

@@ -167,7 +167,7 @@ full_changes = ""
 
 j = 0
 matrices = []
-for i in range(0, 10):
+for i in range(0, 15):
   m = [[15 for y in range(25)] for x in range(40)] 
  # do_circle(m, cos(i/10.0)*10+20, sqrt(i/10.0)*10+10, abs(tan(i/50.0)) * 10,i)
   #do_circle(m, cos(i/10.0)*10+20, sin(i/10.0)*10+10, abs(tan(i/10.0)) * 10,i)
@@ -181,7 +181,7 @@ for i in range(0, 10):
  
 
   #apply_palette(m)
-  if True or  i % 4 == 0:
+  if True: # or  i % 4 == 0:
     matrices.append(m)
     show_mtx(m)
     if j > 1:

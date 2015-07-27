@@ -7,19 +7,18 @@ entry
 	lda	#0
 	jsr	$1000
 
-	; Set up raster interrupt.
-
 	lda	#$3b
-	sta	$d011
+	sta	$d011 ; Clear raster interrupt bit #8 and setup screen
 	lda	#$ff
-	sta	$d012
+	sta	$d012 ; Raster interrupt line (0xff)
 	lda	#$01
-	sta	$d01a
-	lsr	$d019
+	sta	$d01a ; Raster interrupt enabled
+	lsr	$d019 ; Interrupt ACK
 
 	; Install simple IRQ wrapper to call playroutine.
 	; Alternatively, we could use the $fffe vector normally.
 
+        
 	ldx	#<$1003
 	ldy	#>$1003
 	jsr	$c10
@@ -35,6 +34,8 @@ entry
 	lda	#$1
 	sta	$d020
 
+
+        
 	; Load the first picture.
 
 	jsr	$c90
