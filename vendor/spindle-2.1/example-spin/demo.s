@@ -39,10 +39,12 @@ entry
 
 	jsr	$c90
 
-        ;jmp disablebot
+        jmp disablebot
 	; Wait for space, then load the next picture, etc.
 
-	jsr	wait4space
+;	jsr	wait4space
+secondgfx:
+cli
 	jsr	$c90
 	jsr	wait4space
 	jsr	$c90
@@ -66,7 +68,17 @@ disablebot:
 ;  sta $3fff
 
 wait_f9:
-  ;sei
+  sei
+  jsr $1003
+
+  lda	#$ff
+  sta	$dc02
+  lsr
+  sta	$dc00
+  lda	#$10
+  bit	$dc01
+  beq	secondgfx
+
   lda #$fa
 wait_f9_loop:
   cmp $d012
