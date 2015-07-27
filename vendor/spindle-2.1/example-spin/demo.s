@@ -55,6 +55,7 @@ cli
 
   
 disablebot:
+  sei
 
 ;l1:
 ;  bit $d011
@@ -67,16 +68,24 @@ disablebot:
 ;  lda #$00
 ;  sta $3fff
 
-wait_f9:
-  sei
-  jsr $1003
+  lda #$05
+wait_05:
+  cmp $d012
+  bne wait_05
+  sta   $d020
+  nop
+  lda #$05
+  sta   $d020
 
+wait_f9:
+  jsr   $1003
   lda	#$ff
   sta	$dc02
   lsr
   sta	$dc00
   lda	#$10
   bit	$dc01
+
   beq	secondgfx
 
   lda #$fa
@@ -98,7 +107,7 @@ wait_ff_loop:
   ora #$08
   sta $d011
 
-  jmp wait_f9 
+  jmp wait_05
    
 
 wait4space:
