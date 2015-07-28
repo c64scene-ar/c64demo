@@ -1,0 +1,55 @@
+
+!macro basic_header {
+	!byte $b, $08, $EF, $00, $9E, $32, $30, $36,$31, $00, $00, $00 
+}
+
+!to "mc.png.prg", cbm    ; set output file and format
+	*= $0801		; Start at C64 BASIC start
+	+basic_header		; Call program header macro
+    
+
+	lda	$d0
+	lda     $D016 ;enable multicolor
+	ora     #$10
+	sta     $D016
+
+	lda     #$BB ;enable bitmap mode
+	sta     $D011
+
+	lda     #$16 ;vic base = $4000
+	sta     $DD00
+
+	lda     #$08 ; video matrix = 4000, bitmap base = 6000
+	sta     $D018
+
+    lda     #0
+	sta     $D020
+	lda     #15
+	sta     $D021
+;
+; memcpy((void*)0xd800, (void*)0x2000, 0x400);
+;
+	ldx	#0
+.memcpy
+	lda	$2000, x
+	sta	$d800, x
+	lda	$2100, x
+	sta	$d900, x
+	lda	$2200, x
+	sta	$da00, x
+	lda	$2300, x
+	sta	$db00, x
+	dex
+	bne	.memcpy
+
+.loop
+	jmp	.loop
+
+*= $4000
+!bin "mc.png-v.bin"
+
+*= $6000
+!bin "mc.png.bin"
+
+*= $2000
+!bin "mc.png-c.bin"

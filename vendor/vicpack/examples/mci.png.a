@@ -1,0 +1,155 @@
+
+!macro basic_header {
+	!byte $b, $08, $EF, $00, $9E, $32, $30, $36,$31, $00, $00, $00 
+}
+
+!to "mci.png.prg", cbm    ; set output file and format
+	*= $0801		; Start at C64 BASIC start
+	+basic_header		; Call program header macro
+    
+
+	lda #$7f
+	sta $dc0d      ; no timer IRQs
+	lda $dc0d      ; clear timer IRQ flags
+
+	lda	$d0
+	lda     $D016 ;enable multicolor
+	ora     #$10
+	sta     $D016
+
+	lda     #$BB ;enable bitmap mode
+	sta     $D011
+
+	lda     #$08 ; video matrix = 8000, bitmap base = a000
+	sta     $D018
+
+    lda     #0
+	sta     $d020
+	lda     #15
+	sta     $d021
+
+    lda #$ff
+    sta $d015 ;enable all
+    sta $d017 ;expand y
+
+!for .sprite, 8 {
+    lda #1 ;x
+    sta $d000 + (.sprite - 1) * 2
+
+    lda #(.sprite - 1) * 42 AND $ff ;y
+    sta $d001 + (.sprite - 1) * 2
+
+    lda # 0
+    sta $d027 + (.sprite - 1)
+
+    lda #$10
+    sta $43f7 + .sprite
+    sta $83f7 + .sprite
+}
+
+	ldx	#0
+.memcpy
+	lda	$2000, x
+	sta	$d800, x
+	lda	$2100, x
+	sta	$d900, x
+	lda	$2200, x
+	sta	$da00, x
+	lda	$2300, x
+	sta	$db00, x
+	dex
+	bne	.memcpy
+
+.loop
+    lda $d012
+    cmp #$ff
+    bne .loop
+
+	lda     #$16 ;vic base = $4000
+	sta     $DD00
+
+	lda     $D016 ;x scroll = 0
+    and #%11111000
+	sta     $D016
+
+.loop2
+    lda $d012
+    cmp #$ff
+    bne .loop2
+
+	lda     #$15 ;vic base = $8000
+	sta     $DD00
+
+	lda     $D016 ;x scroll = 1
+    and #%11111000
+    ora #1
+	sta     $D016
+
+    jmp .loop
+
+*= $4000
+!bin "mci.png1-v.bin"
+
+*= $6000
+!bin "mci.png1.bin"
+
+*= $8000
+!bin "mci.png2-v.bin"
+
+*= $a000
+!bin "mci.png2.bin"
+
+*= $2000
+!bin "mci.png-c.bin"
+
+!macro SpriteLine .v {
+    !by .v>>16, (.v>>8)&255, .v&255
+}
+
+*= $4400
+
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
+
+*= $8400
+
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################
++SpriteLine %########################

@@ -1,0 +1,1000 @@
+ 1356  ls
+ 1357  vi script 
+ 1358  make
+ 1359  fg
+ 1360  ls
+ 1361  vi script 
+ 1362  make
+ 1363  vi script 
+ 1364  make
+ 1365  fg
+ 1366  make
+ 1367  fg
+ 1368  make
+ 1369  fg
+ 1370  f
+ 1371  fg
+ 1372  make
+ 1373  fg
+ 1374  make
+ 1375  ls
+ 1376  vi script 
+ 1377  make
+ 1378  ls
+ 1379  cd ecmplasma/
+ 1380  ls
+ 1381  vi effect.
+ 1382  vi effect.s
+ 1383  cd ..
+ 1384  sl
+ 1385  cd lft/
+ 1386  ls
+ 1387  vi effect.s 
+ 1388  cd ..
+ 1389  ls
+ 1390  cd music/
+ 1391  ls
+ 1392  vi install.
+ 1393  vi install.s
+ 1394  cd ..
+ 1395  grep dd00 * -r
+ 1396  cd ../
+ 1397  ls
+ 1398  cd example-pefchain
+ 1399  cd ../spindle/
+ 1400  grep dd00 * 
+ 1401  grep dd00 *  -r | grep stage
+ 1402  grep dd00 *  -r | grep -v stage
+ 1403  vi prgloader.s
+ 1404  cd -
+ 1405  make
+ 1406  vi script 
+ 1407  make
+ 1408  fg
+ 1409  vi script 
+ 1410  cd ecmplasma/
+ 1411  l
+ 1412  cd ..
+ 1413  ls
+ 1414  cd 
+ 1415  cd -
+ 1416  cd ../spindle/
+ 1417  ls
+ 1418  vi prgloader.
+ 1419  vi prgloader.s 
+ 1420  make
+ 1421  cd -
+ 1422  make
+ 1423  cp ../example-pefchain-old/spn/otro/spindle-2.1/example-pefchain/script .
+ 1424  make
+ 1425  cd ..
+ 1426  ls
+ 1427  cd example-spin/
+ 1428  ls
+ 1429  cd ../example-pefchain
+ 1430  x64 -model drean -8 demo.d64 
+ 1431  kill -9 %1
+ 1432  ls
+ 1433  cd ..
+ 1434  ls
+ 1435  cd spindle/
+ 1436  ls
+ 1437  vi stage1.s 
+ 1438  jobs
+ 1439  rm .stage1.s.swp 
+ 1440  vi stage1.s 
+ 1441  make
+ 1442  cd -
+ 1443  cd example-spin/
+ 1444  make
+ 1445  touch demo.s 
+ 1446  make
+ 1447  cd ../example-pefchain
+ 1448  ls
+ 1449  make
+ 1450  ls
+ 1451  cd ..
+ 1452  grep "stage 2" * -r
+ 1453  vi spindle/pefchain.c 
+ 1454  make
+ 1455  cd spindle/
+ 1456  make
+ 1457  cd ..
+ 1458  ls
+ 1459  cd spindle/
+ 1460  ls
+ 1461  cd ../example-pefchain
+ 1462  make
+ 1463  fg
+ 1464  ls
+ 1465  make
+ 1466  ls
+ 1467  vi dirart.txt 
+ 1468  vi script 
+ 1469  cd mus
+ 1470  cd music/
+ 1471  ls
+ 1472  vi music.pef 
+ 1473  vi music.sid 
+ 1474  ls
+ 1475  vi install.
+ 1476  vi install.s 
+ 1477  cd ..
+ 1478  ls
+ 1479  cd ..
+ 1480  vi spindle/pefchain.s
+ 1481  vi spindle/pefchain.c 
+ 1482  make
+ 1483  cd -
+ 1484  cd ../spindle/
+ 1485  make
+ 1486  cd ..
+ 1487  cd example-pefchain
+ 1488  make
+ 1489  fg
+ 1490  ls
+ 1491  cd lft/
+ 1492  ls
+ 1493  vi effect.s 
+ 1494  ls
+ 1495  cd ..
+ 1496  git commit -a
+ 1497  cd ..
+ 1498  git commit spindle-2.1/
+ 1499  git add spindle-2.1/example-spin/pungas.kla 
+ 1500  git commit -a
+ 1501  git push
+ 1502  exit
+ 1503  cd ..
+ 1504  cd spindle/
+ 1505  ls
+ 1506  vi pefchain.s
+ 1507  ls *s
+ 1508  vi prgloader.s 
+ 1509  grep dd00 *
+ 1510  vi prgloader.s 
+ 1511  rm .prgloader.s.swp 
+ 1512  make
+ 1513  fg
+ 1514  vi prgloader.s 
+ 1515  make
+ 1516  fg
+ 1517  make
+ 1518  ls
+ 1519  jobs
+ 1520  exit
+ 1521  ls
+ 1522  cd sp
+ 1523  ls
+ 1524  cd c64demo
+ 1525  cd vendor/
+ 1526  ls
+ 1527  cd spindle-2.1/
+ 1528  ls
+ 1529  cd example-spin/
+ 1530  ls
+ 1531  vi ../spindle/stage1.s 
+ 1532  ls
+ 1533  vi demo.s 
+ 1534  ls
+ 1535  fg
+ 1536  rm .demo.s.swp 
+ 1537  vi demo.s 
+ 1538  make
+ 1539  fg
+ 1540  make
+ 1541  x64 disk.d64 
+ 1542  fg
+ 1543  make
+ 1544  fg
+ 1545  ls
+ 1546  git commit -a
+ 1547  git push
+ 1548  cd
+ 1549  cd c64demo
+ 1550  ls
+ 1551  cd src/
+ 1552  ls
+ 1553  cd ../vendor/
+ 1554  cd spindle-2.1/
+ 1555  ls
+ 1556  cd example-spin/
+ 1557  ls
+ 1558  make
+ 1559  x64 disk.d64 
+ 1560  ls
+ 1561  vi demo.s 
+ 1562  vi ../spindle/prgloader.s 
+ 1563  cd ../spindle
+ 1564  grep 300 *
+ 1565  grep prgloader *
+ 1566  vi pef2prg.c 
+ 1567  fg
+ 1568  vi stage1.s 
+ 1569  fg
+ 1570  vi stage1.s 
+ 1571  jobs
+ 1572  fg 1
+ 1573  fg
+ 1574  ls
+ 1575  cd ..
+ 1576  ls
+ 1577  cd example-spin/
+ 1578  ls
+ 1579  vi demo.s
+ 1580  ls
+ 1581  make
+ 1582  cd ..
+ 1583  ls
+ 1584  cd ..
+ 1585  ls
+ 1586  cd ..
+ 1587  ls
+ 1588  cd src/
+ 1589  ls
+ 1590  make
+ 1591  vi Makefile 
+ 1592  jobs
+ 1593  rm .Makefile.swp 
+ 1594  vi Makefile 
+ 1595  ls
+ 1596  cd part/
+ 1597  ls
+ 1598  vi Makefile 
+ 1599  grep spindle * -r
+ 1600  vi common.mk 
+ 1601  fg
+ 1602  vi common.mk 
+ 1603  ls
+ 1604  vi luz/Makefile
+ 1605  cd ..
+ 1606  make
+ 1607  cd hex
+ 1608  ls
+ 1609  cd part/
+ 1610  cd he
+ 1611  ls
+ 1612  cd hex
+ 1613  ls
+ 1614  make
+ 1615  ls
+ 1616  vi Makefile 
+ 1617  ls
+ 1618  vi hex.s
+ 1619  cd ..
+ 1620  find . -name "sine.bin"
+ 1621  cp bluemax/sine.bin hex/
+ 1622  cd hex
+ 1623  make
+ 1624  ls
+ 1625  vi test.py 
+ 1626  python test.py 
+ 1627  ls
+ 1628  vi test.py 
+ 1629  ls
+ 1630  cd ..
+ 1631  ls
+ 1632  make
+ 1633  cd ..
+ 1634  make
+ 1635  vi script 
+ 1636  rm demo.d64 
+ 1637  make
+ 1638  ls demo.d64 
+ 1639  x64 demo.d64 
+ 1640  x64 -model drean demo.d64 
+ 1641  ls
+ 1642  vi script 
+ 1643  x64 -model drean demo.d64 
+ 1644  x64 -model c64 demo.d64 
+ 1645  x64 -model drean demo.d64 
+ 1646  x64 -model drean -8 demo.d64 
+ 1647  ls
+ 1648  cd -
+ 1649  ls
+ 1650  vi common.mk 
+ 1651  grep pefchain * -r
+ 1652  cd ..
+ 1653  grep pefchain * -r
+ 1654  grep SPINDLE_DIR *
+ 1655  vi common.mk 
+ 1656  make
+ 1657  vi common.mk 
+ 1658  ../vendor/spindle-1.0/spindle/pefchain --help
+ 1659  fg
+ 1660  grep "-H" * -r
+ 1661  grep "\-H" * -r
+ 1662  vi Makefile 
+ 1663  make
+ 1664  x64 demo.d64 
+ 1665  kill -9 51
+ 1666  kill -9 %1
+ 1667  x64 -model drean demo.d64 
+ 1668  ls
+ 1669  vi script 
+ 1670  cd part/
+ 1671  ls
+ 1672  cd luz/
+ 1673  ls
+ 1674  vi luz.s 
+ 1675  cd ..
+ 1676  vi sc
+ 1677  ls
+ 1678  cd -
+ 1679  ls
+ 1680  cd ..
+ 1681  ls
+ 1682  vi script 
+ 1683  make
+ 1684  x64 -model drean demo.d64 
+ 1685  fg
+ 1686  vi script 
+ 1687  vi part/
+ 1688  ls
+ 1689  vi script 
+ 1690  cat ../vendor/spindle-2.1/example-pefchain
+ 1691  cat ../vendor/spindle-2.1/example-pefchain/script 
+ 1692  fg
+ 1693  ls
+ 1694  vi script 
+ 1695  cat ../vendor/spindle-2.1/example-pefchain/script 
+ 1696  fg
+ 1697  make
+ 1698  x64 demo.d64 
+ 1699  fg
+ 1700  make
+ 1701  x64 demo.d64 
+ 1702  make
+ 1703  fg
+ 1704  make
+ 1705  fg
+ 1706  make
+ 1707  fg
+ 1708  make
+ 1709  x64 demo.d64 
+ 1710  kill -9 %2
+ 1711  x64 -model drean demo.d64 
+ 1712  make
+ 1713  cd bl
+ 1714  ls
+ 1715  cd part/bluemax/
+ 1716  ls
+ 1717  vi bluee
+ 1718  vi bluemax.
+ 1719  vi bluemax.s 
+ 1720  ls
+ 1721  fg
+ 1722  ls
+ 1723  cd ..
+ 1724  ls
+ 1725  cd peron/
+ 1726  ls
+ 1727  vi header.i 
+ 1728  cd ..
+ 1729  ls
+ 1730  cd ..
+ 1731  ls
+ 1732  vi script 
+ 1733  make
+ 1734  cd part/
+ 1735  ls
+ 1736  cd luz/
+ 1737  ls
+ 1738  x64 luz.prg 
+ 1739  ls
+ 1740  vi luz.s 
+ 1741  ls
+ 1742  cd ..
+ 1743  ls
+ 1744  cd ..
+ 1745  ls
+ 1746  cd -
+ 1747  ls
+ 1748  cd .
+ 1749  cd ..
+ 1750  cd vendor/
+ 1751  ls
+ 1752  cd spindle-2.1/
+ 1753  ls
+ 1754  cd template/
+ 1755  ls
+ 1756  cat effect.s 
+ 1757  vi effect.s 
+ 1758  ls
+ 1759  vi effect.s 
+ 1760  cp effect.s ../../../src/part/luz/
+ 1761  cd ../../../src/part/luz/
+ 1762  fg
+ 1763  ls
+ 1764  vi effect.s 
+ 1765  ls
+ 1766  vi luz.s 
+ 1767  ls
+ 1768  fg
+ 1769  ls
+ 1770  cd ..
+ 1771  ls
+ 1772  cd ..
+ 1773  ls
+ 1774  jobs
+ 1775  exit
+ 1776  cd new
+ 1777  ls
+ 1778  cd Desktop/
+ 1779  ls
+ 1780  cd new\ logs/
+ 1781  ls
+ 1782  python ~/LicenseFramework/tools/aestest.py  -d lps\ 1.dat
+ 1783  python ~/LicenseFramework/tools/aestest.py  -d lps\ 2.dat
+ 1784  ls
+ 1785  python ~/LicenseFramework/tools/aestest.py  -d license.dat
+ 1786  ls
+ 1787  grep Reading *
+ 1788  vi tomcat7-stdout.2015-07-27.log 
+ 1789  ls
+ 1790  cd /Lic
+ 1791  cd /home/cubica/LicenseFramework
+ 1792  ls
+ 1793  grep logger * -r
+ 1794  ls
+ 1795  cd licensor-
+ 1796  ls
+ 1797  cd licensor-client/
+ 1798  ls
+ 1799  find . -name "*Check*"
+ 1800  vi ./src/main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1801  jobs
+ 1802  rm ./src/main/java/com/pelgoros/licensor/client/service/.LicenseCheckService.java.swp 
+ 1803  vi ./src/main/java/com/pelgoros/licensor/client/service/Li
+ 1804  vi ./src/main/java/com/pelgoros/licensor/client/domain/check/LicenseExpirationChecker.java
+ 1805  vi ./src/main/java/com/pelgoros/licensor/client/domain/check/HardwareChecker.java
+ 1806  cd ..
+ 1807  ls
+ 1808  cd
+ 1809  cd Desktop/
+ 1810  ls
+ 1811  cd licences-new/
+ 1812  ls
+ 1813  cd ..
+ 1814  cd new\ logs/
+ 1815  ls
+ 1816  grep "Request" * 
+ 1817  grep "Request" *  -r
+ 1818  cd
+ 1819  cd LicenseFramework
+ 1820  ls
+ 1821  find . -name "*Checksum*"
+ 1822  vi ./licensor-client/src/main/java/com/pelgoros/licensor/client/domain/check/LibChecksumChecker.java
+ 1823  ls
+ 1824  cd licensor-client/
+ 1825  ls
+ 1826  cd src/
+ 1827  ls
+ 1828  cd ..
+ 1829  cd -
+ 1830  ls
+ 1831  find . -name "*Check*"
+ 1832  vi ./main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1833  git commit ./main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1834  cd ..
+ 1835  vi ./main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1836  vi src//main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1837  find . -name "*Client*"
+ 1838  vi ./src/main/java/com/pelgoros/licensor/client/service/LicenseClientService.java
+ 1839  git commit ./src/main/java/com/pelgoros/licensor/client/service/LicenseClientService.java
+ 1840  git push
+ 1841  ls
+ 1842  cd ..
+ 1843  ls
+ 1844  fg
+ 1845  find . -name "PropertyProvide*"
+ 1846  vi ./licensor-client/src/main/java/com/pelgoros/licensor/client/config/PropertyProvider.jav
+ 1847  fg
+ 1848  vi ./src/main/java/com/pelgoros/licensor/client/service/LicenseClientService.java
+ 1849  ls
+ 1850  obs
+ 1851  jobs
+ 1852  fg
+ 1853  ls
+ 1854  cd licensor-client/
+ 1855  ls
+ 1856  jobs
+ 1857  vi src//main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1858  find . -name "Checksum*"
+ 1859  find . -name "(*Checksum*"
+ 1860  find . -name "*Checksum*"
+ 1861  vi ./src/main/java/com/pelgoros/licensor/client/domain/check/LibChecksumChecker.java
+ 1862  cd ..
+ 1863  ls
+ 1864  cat test.sh 
+ 1865  fg
+ 1866  mvn package -P production -Dmaven.test.skip=true
+ 1867  ifconfig 
+ 1868  fg
+ 1869  vi ./src/main/java/com/pelgoros/licensor/client/domain/check/LibChecksumChecker.java
+ 1870  cd licensor-client/
+ 1871  vi ./src/main/java/com/pelgoros/licensor/client/domain/check/LibChecksumChecker.java
+ 1872  find Proper*
+ 1873  find . -name Proper*
+ 1874  vi ./src/main/java/com/pelgoros/licensor/client/config/PropertyProvider.java
+ 1875  vi ./src/main/java/com/pelgoros/licensor/client/domain/check/LibChecksumChecker.java
+ 1876  exit
+ 1877  ls
+ 1878  cd c64demo
+ 1879  ls
+ 1880  cd vendor/spindle-2.1/
+ 1881  ls
+ 1882  cd example-pefchain
+ 1883  ls
+ 1884  nautilus .
+ 1885  ls
+ 1886  cd ..
+ 1887  ls
+ 1888  cd example-spin/
+ 1889  ls
+ 1890  vi demo.s 
+ 1891  make
+ 1892  fg
+ 1893  vi demo.s 
+ 1894  make
+ 1895  x64 demo.d64 
+ 1896  x64 disk.d64 
+ 1897  fg
+ 1898  make
+ 1899  x64 disk.d64 
+ 1900  fg
+ 1901  make
+ 1902  x64 disk.d64 
+ 1903  fg
+ 1904  make
+ 1905  x64 disk.d64 
+ 1906  fg
+ 1907  make
+ 1908  x64 disk.d64 
+ 1909  fg
+ 1910  make
+ 1911  x64 disk.d64 
+ 1912  fg
+ 1913  ls
+ 1914  git pull demo.s
+ 1915  git stash demo.s
+ 1916  ls
+ 1917  git pull
+ 1918  mv demo.s eee.s
+ 1919  git pull
+ 1920  git pull demo.
+ 1921  git pull demo.s
+ 1922  ls
+ 1923  mv eee.s demo.s
+ 1924  vi demo.s 
+ 1925  fg
+ 1926  make
+ 1927  x64 disk.d64 
+ 1928  fg
+ 1929  vi demo.s 
+ 1930  x64 disk.d64 
+ 1931  fg
+ 1932  make
+ 1933  x64 disk.d64 
+ 1934  fg
+ 1935  make
+ 1936  x64 disk.d64 
+ 1937  fg
+ 1938  make
+ 1939  x64 disk.d64 
+ 1940  fg
+ 1941  make
+ 1942  x64 disk.d64 
+ 1943  fg
+ 1944  make
+ 1945  x64 disk.d64 
+ 1946  fg
+ 1947  make
+ 1948  x64 disk.d64 
+ 1949  x64 disk.d64 -help | grep debug
+ 1950  x64 -help | less
+ 1951  x64 -VICIIborders 2 disk.d64
+ 1952  fg
+ 1953  make
+ 1954  x64 -VICIIborders 2 disk.d64
+ 1955  kill -9 %2
+ 1956  fg
+ 1957  make
+ 1958  x64 -VICIIborders 2 disk.d64
+ 1959  fg
+ 1960  make
+ 1961  x64 -VICIIborders 2 disk.d64
+ 1962  fg
+ 1963  make
+ 1964  x64 -VICIIborders 2 disk.d64
+ 1965  kill -9 %2
+ 1966  fg
+ 1967  make
+ 1968  x64 -VICIIborders 2 disk.d64
+ 1969  fg
+ 1970  make
+ 1971  x64 -VICIIborders 2 disk.d64
+ 1972  fg
+ 1973  make
+ 1974  x64 -VICIIborders 2 disk.d64
+ 1975  fg
+ 1976  make
+ 1977  x64 -VICIIborders 2 disk.d64
+ 1978  fg
+ 1979  git push
+ 1980  git commit -a
+ 1981  git push
+ 1982  x64 -model drean -VICIIborders 2 disk.d64
+ 1983  kill -9 %1
+ 1984  cd
+ 1985  ls
+ 1986  cd LicenseFramework
+ 1987  ls
+ 1988  grep debug * -r
+ 1989  find . -name "pom*"
+ 1990  find . -name "*prop*"
+ 1991  find . -name "*prop*" | xargs grep DEBUG
+ 1992  vi :log4j.appender.file.threshold=DEBUG
+ 1993  vi ./licensor-client/src/main/resources/log4j.properties
+ 1994  ls
+ 1995  vi ./licensor-client/src/main/resources/log4j.properties
+ 1996  grep logger * -r
+ 1997  vi icensor-client/src/main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1998  vi licensor-client/src/main/java/com/pelgoros/licensor/client/service/LicenseCheckService.java
+ 1999  jobs
+ 2000  exit
+ 2001  ls
+ 2002  cd c64demo
+ 2003  ls
+ 2004  rm -fr loader
+ 2005  rm -fr loader-v146.zip 
+ 2006  ls
+ 2007  ls misc/
+ 2008  ls
+ 2009  cd shared/
+ 2010  ls
+ 2011  car kernal.inc 
+ 2012  cat kernal.inc 
+ 2013  ls
+ 2014  cat cpu.inc 
+ 2015  ls
+ 2016  cat vic.inc 
+ 2017  cat vic.inc  | grep BOR
+ 2018  cat vic.inc  | grep VIC_BASE
+ 2019  ls
+ 2020  cd ..
+ 2021  ls
+ 2022  cd cc65/
+ 2023  ls
+ 2024  cd ..
+ 2025  mkdir ../c64tools
+ 2026  mv cc65/ ../c64tools/
+ 2027  ls
+ 2028  cd info/
+ 2029  ls
+ 2030  cd ..
+ 2031  ls
+ 2032  cd mis
+ 2033  cd vendor/
+ 2034  ls
+ 2035  cd ..
+ 2036  ls
+ 2037  cd -
+ 2038  ./ct2util 
+ 2039  ls
+ 2040  cd ..
+ 2041  ls
+ 2042  cd src/
+ 2043  ls
+ 2044  cd par
+ 2045  cd part/
+ 2046  ls
+ 2047  cd bluemax/
+ 2048  ls
+ 2049  cd ../luz/
+ 2050  ls
+ 2051  vi luz.s
+ 2052  make
+ 2053  x64 luz.prg 
+ 2054  fg
+ 2055  vi luz.s
+ 2056  ls
+ 2057  vi mtx.py 
+ 2058  jobs
+ 2059  rm .mtx.py.swp 
+ 2060  vi mtx.py 
+ 2061  vi luz.s
+ 2062  make
+ 2063  ls
+ 2064  vi Makefile
+ 2065  hexdump giphy34.gfx 
+ 2066  hexdump giphy34.gfx   | head
+ 2067  make
+ 2068  touch luz.s
+ 2069  make
+ 2070  cd ..
+ 2071  make
+ 2072  cd ..
+ 2073  vi script 
+ 2074  make
+ 2075  cd -
+ 2076  fg
+ 2077  vi luz.s
+ 2078  cd luz
+ 2079  vi luz.s
+ 2080  cd ..
+ 2081  make
+ 2082  cd ..
+ 2083  make
+ 2084  x64 demo.d64 
+ 2085  fg
+ 2086  ls
+ 2087  cd part/
+ 2088  ls
+ 2089  cd luz
+ 2090  ls
+ 2091  vi luz.s
+ 2092  ls
+ 2093  vi mtx.py 
+ 2094  make
+ 2095  touch luz.s
+ 2096  python mtx.py 
+ 2097  cd ..
+ 2098  ls
+ 2099  cd ..
+ 2100  make
+ 2101  x64 demo.d64 
+ 2102  fg
+ 2103  ls
+ 2104  cd part/
+ 2105  cd luz/
+ 2106  ls
+ 2107  vi luz.s 
+ 2108  vi mtx.py 
+ 2109  make
+ 2110  touch luz.s
+ 2111  cd ..
+ 2112  make
+ 2113  x64 demo.d64 
+ 2114  cd part/luz
+ 2115  x64 luz.prg 
+ 2116  cd ..
+ 2117  ls
+ 2118  make
+ 2119  cd ..
+ 2120  make
+ 2121  ls
+ 2122  vi script 
+ 2123  make
+ 2124  x64 demo.d64 
+ 2125  ls
+ 2126  git commit -a
+ 2127  git push
+ 2128  ls
+ 2129  cd part/
+ 2130  ls
+ 2131  cd he
+ 2132  ls
+ 2133  cd bluemax/
+ 2134  ls
+ 2135  make
+ 2136  ls
+ 2137  touch bluemax.s 
+ 2138  make
+ 2139  x64 bluemax.prg 
+ 2140  kill -9 %1
+ 2141  ls
+ 2142  fg
+ 2143  vi bluemax.s 
+ 2144  ls
+ 2145  cd ..
+ 2146  vi script 
+ 2147  make
+ 2148  ls
+ 2149  vi script 
+ 2150  vi part/bluemax/bluemax.s 
+ 2151  ls
+ 2152  cd ..
+ 2153  ls
+ 2154  cd luz
+ 2155  ls
+ 2156  cd par
+ 2157  cd src/
+ 2158  cd part/
+ 2159  ls
+ 2160  cd luz/
+ 2161  ls
+ 2162  x64 -model drean luz.p
+ 2163  x64 -model drean luz.prg 
+ 2164  ls
+ 2165  cd ..
+ 2166  ls
+ 2167  cd ..
+ 2168  ls
+ 2169  cd -
+ 2170  ls
+ 2171  mkdir vborder
+ 2172  cd vborder/
+ 2173  mv ../luz/effect.s .
+ 2174  cp ~/c64demo/vendor/spindle-2.1/template/Makefile .
+ 2175  vi Makefile 
+ 2176  rm Makefile 
+ 2177  cp ../luz/Makefile .
+ 2178  vi Makefile 
+ 2179  ls
+ 2180  cd ..
+ 2181  ls
+ 2182  cd .
+ 2183  ls
+ 2184  cd ..
+ 2185  ls
+ 2186  cd ..
+ 2187  find . -name "vicpack*"
+ 2188  cd c64tools/
+ 2189  ls
+ 2190  git clone https://github.com/jkotlinski/vicpack.git
+ 2191  cd vicpack/
+ 2192  ls
+ 2193  make
+ 2194  sudo apt-cache search ocaml
+ 2195  sudo apt-get install ocaml
+ 2196  ls
+ 2197  make
+ 2198  sudo apt-cache search ocaml images
+ 2199  sudo apt-get install libcamimages-ocaml-dev
+ 2200  sudo apt-get install libcamlimages-ocaml-dev
+ 2201  make
+ 2202  sudo apt-get install libcamlimages-ocaml
+ 2203  sudo apt-cache search ocaml images
+ 2204  sudo apt-get install libcairo-ocaml-dev libgd-ocaml libgd-ocaml-dev libmm-ocaml libmm-ocaml-dev
+ 2205  make
+ 2206  vi Makefile
+ 2207  make
+ 2208  opam
+ 2209  sudo apt-get install opam
+ 2210  opam list
+ 2211  opam init
+ 2212  opam upgrade
+ 2213  opam --hep
+ 2214  opam --help
+ 2215  add-apt-repository ppa:avsm/ppa
+ 2216  apt-get update
+ 2217  sudo add-apt-repository ppa:avsm/ppa
+ 2218  sudo apt-get update
+ 2219  apt-get install ocaml ocaml-native-compilers camlp4-extra opam
+ 2220  sudo apt-get install ocaml ocaml-native-compilers camlp4-extra opam
+ 2221  lsb_release 
+ 2222  lsb_release -a
+ 2223  sudo apt-get remove ocaml-nox
+ 2224  sudo dpkg -P
+ 2225  sudo dpkg -P ocaml-nox
+ 2226  sudo dpkg -P --help
+ 2227  sudo dpkg -P --help | grep all
+ 2228  ls
+ 2229  sudo apt-get install ocaml ocaml-native-compilers camlp4-extra opam
+ 2230  make
+ 2231  opam
+ 2232  opam init
+ 2233  vi ~/.profile 
+ 2234  vi ~/.ocamlinit
+ 2235  ls
+ 2236  make
+ 2237  opam --help
+ 2238* opam 
+ 2239  opam list -a
+ 2240  opam list -a | grep -i image
+ 2241  opam install camlimages
+ 2242  make
+ 2243  opam install imagemagick
+ 2244  sudo apt-get install libimagemagick-dev
+ 2245  sudo apt-cache search libmagick
+ 2246  sudo apt-cache search lib imagemagick
+ 2247  ls
+ 2248  make
+ 2249  find . -name spriteover *
+ 2250  find . -name spriteover*
+ 2251  vi spriteoverlays.ml 
+ 2252  ls
+ 2253  find . -name "*ml
+ 2254  find . -name "*ml"
+ 2255  find . -name "Ima*"
+ 2256  vi asm6510.
+ 2257  vi asm6510.ml 
+ 2258  ls
+ 2259  cd examples/
+ 2260  ls
+ 2261  make
+ 2262  cd ..
+ 2263  ls
+ 2264  make
+ 2265  vi Makefile.config 
+ 2266  ls
+ 2267  vi README.md 
+ 2268  ls
+ 2269  vi Makefile.config 
+ 2270  ls /usr/local/lib
+ 2271  ls /usr/local/liboca
+ 2272  ls /usr/local/lib/ocaml/
+ 2273  fg
+ 2274  ls /usr/local/lib/ocaml/4.02.1/
+ 2275  ls /usr/local/lib/ocaml/4.02.1/stublibs/
+ 2276  fg
+ 2277  ocamlc
+ 2278  fg
+ 2279  make
+ 2280  opam list -a images
+ 2281  opam list -a 
+ 2282  opam list -a  | grep image
+ 2283  sudo opam install camlimages
+ 2284  opam install camlimages
+ 2285  ls
+ 2286  vi Makefile
+ 2287  vi Makefile.config 
+ 2288  ls
+ 2289  ls ~/.ocamlinit 
+ 2290  ls ~/.opam/repo/
+ 2291  ls ~/.opam/repo/default/
+ 2292  ls ~/.opam/repo/default/packages/
+ 2293  ls
+ 2294  CC=clang make
+ 2295  ls
+ 2296  strace -f make
+ 2297  strace -f make 2>&1 | grep gcc
+ 2298  strace -f make 2>&1 | grep clang
+ 2299  strace -f make 2>&1 | grep llvm
+ 2300  strace -f make 2>&1 
+ 2301  cd /usr/lib/ocaml/
+ 2302  find . -name "*mages.cm*"
+ 2303  cd ..
+ 2304  cd local
+ 2305  cd lib
+ 2306  ls
+ 2307  cd ocaml/
+ 2308  ls
+ 2309  find . -name "*mages.cm*"
+ 2310  cd ~/.opam/
+ 2311  ls
+ 2312  find . -name "*mages.cm*"
+ 2313  pwd
+ 2314  cd system/lib/camlimages/
+ 2315  ls
+ 2316  pwd
+ 2317  cd -
+ 2318  cd ..
+ 2319  cd c64tools/
+ 2320  ls
+ 2321  cd vicpack/
+ 2322  ls
+ 2323  vi Makefile.config 
+ 2324  fg
+ 2325  which ocaml
+ 2326  fg
+ 2327  ls /usr/local/lib/ocaml/
+ 2328  fg
+ 2329  make
+ 2330  opam list -a
+ 2331  opam list -a | grep bit
+ 2332  opam list -a | grep Bit
+ 2333  opam --help
+ 2334  ocaml search bitset
+ 2335  opam search bitset
+ 2336  opam search BitSet
+ 2337  make
+ 2338  cd /home/cubica/.opam/system/
+ 2339  find . -name "*BitSet*"
+ 2340  find . -iname "*BitSet*"
+ 2341  cd ..
+ 2342  find . -name "*BitSet*"
+ 2343  cd -
+ 2344  cd ..
+ 2345  cd c64tools/vicpack/
+ 2346  vi spriteoverlays.ml 
+ 2347  grep BitSet * -r
+ 2348  opam list -a | grep batt
+ 2349  opam install batteries
+ 2350  make
+ 2351  strace -f make
+ 2352  strace -f make | grep -i bit
+ 2353  strace -f make 2>&1 | grep -i bit
+ 2354  sudo updatedb
+ 2355  history > cmds.txt

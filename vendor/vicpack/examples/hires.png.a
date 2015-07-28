@@ -1,0 +1,98 @@
+
+!macro basic_header {
+	!byte $b, $08, $EF, $00, $9E, $32, $30, $36,$31, $00, $00, $00 
+}
+
+!to "hires.png.prg", cbm    ; set output file and format
+	*= $0801		; Start at C64 BASIC start
+	+basic_header		; Call program header macro
+    
+
+NORMAL = 0
+NOSPRITES = 1
+ONLYSPRITES = 2
+
+;MODE = NORMAL
+;MODE = ONLYSPRITES
+MODE = NOSPRITES
+
+!if MODE = ONLYSPRITES {
+    lda #$1b
+    sta $d011
+
+.clean
+    lda #0
+.msb
+    sta $5000
+    inc .msb + 1
+    bne .clean
+    inc .msb + 2
+    lda .msb + 2
+    cmp #$80
+    bne .clean
+} else {
+	lda #$3b ;enable bitmap mode
+	sta	$d011
+}
+
+	lda	#$16 ;vic base address = $4000
+	sta	$dd00
+
+	lda #$48 ;video matrix = 5000, bitmap base = 6000
+	sta	$d018
+
+	lda	#0
+	sta	$d020
+	sta	$d021
+
+!if MODE != NOSPRITES {
+	lda	#$ff ;enable sprites
+	sta	$d015
+}
+
+_multiplexer:
+	lda #$7f
+	sta $dc0d ;cia 1 off
+	sta $dd0d ;cia 2 off
+
+	sei
+	lda #<swap_start
+	sta $0314
+	lda #>swap_start
+	sta $0315
+
+	lda #$f1
+	sta $d01a
+
+	lda $dc0d
+	lda $dd0d
+	asl $d019
+
+	cli
+.loop
+	jmp	.loop
+
+return
+	;clear interrupt register
+	lda	#1
+	sta	$d019
+
+    pla
+	tay
+	pla
+	tax
+	pla
+	rti
+
+sprite_ptrs = $53f8
+swap_start
+!src "hires.png-swap.a"
+
+*= $6000
+!binary "hires.png.bin"
+
+*= $5000
+!binary "hires.png-v.bin"
+
+*= $4000
+!binary "hires.png-sprites.bin"
