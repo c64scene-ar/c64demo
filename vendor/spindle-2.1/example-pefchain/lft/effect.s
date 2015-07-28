@@ -158,12 +158,18 @@ interrupt
 		beq	nocrunch		; 61
 
 		nop				; 63
+
+                nop ; PVM PATCH - PAL-N
+
 		jsr	delay32			; 2
 
 		ldx	#10			; 34
 		lda	#$79			; 36
 crunchloop
 		jsr	delay24			; 38
+
+                nop ; PVM PATCH - PAL-N
+
 		sta	$d011			; 62	linecrunch
 		clc				; 3
 		adc	#1			; 5
