@@ -3,7 +3,8 @@
 #part/bluemax/bluemax.pef space
 #part/peron/peron.pef -
 
-part/luz/luz.pef -
+#part/luz/luz.pef -
 
+part/hires/hires.pef -
 
 #- -
