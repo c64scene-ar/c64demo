@@ -5,6 +5,7 @@
 
 #part/luz/luz.pef -
 
-part/hires/hires.pef -
+part/hires/hires.pef space
+part/mc/mc.pef -
 
 #- -

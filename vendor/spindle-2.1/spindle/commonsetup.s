@@ -27,5 +27,6 @@ resync
 		txa			; 54
 		inx			; 56
 		inx			; 58
+
 		cmp	$d012		; 60	still on the same line?
 		bne	resync
