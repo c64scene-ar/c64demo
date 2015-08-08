@@ -122,6 +122,8 @@ loop
                 
                 nop
                 and $00
+                nop
+ 
                 and $00
 
 newa            lda #$01

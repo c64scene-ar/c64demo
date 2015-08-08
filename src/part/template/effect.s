@@ -121,6 +121,15 @@ loop
                 bne loop  ; 4
                 
                 nop
+                nop
+                nop
+                and $00
+ 
+                nop
+                and $00
+ 
+                nop
+                nop
                 and $00
                 and $00
 
