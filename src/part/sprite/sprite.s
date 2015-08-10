@@ -42,12 +42,30 @@ NUM_SPRITES = 8
 
 .word loadaddr
 
-* = $c000
+* = $a000
 loadaddr:
 
 setup:
-    lda #$3c          ; VIC bank $0000 - $3fff
+    lda #$3f         ; VIC bank $c000 - $ffff
     sta $dd02
+
+    ;lda $d018 
+    ;and #%00001111 
+    ;ora #%00010000	;set screen to $400 
+
+
+    lda     #0
+    sta     $d015
+    sta     $d017
+    sta     $d01b
+    sta     $d01c
+    sta     $d01d
+
+    lda #$1b
+    sta $d011
+
+    lda #$18
+    sta $d018
 
     jsr init_screen   ; clear the screen
     jsr init_sprite   ; enable sprite
@@ -58,10 +76,14 @@ setup:
     rts
 
 interrupt:
+
+
     sta int_savea+1
     stx int_savex+1
     sty int_savey+1
 
+    lda #$18
+    sta $d018
     jsr move_sprites
     jsr update_sprite_positions
     jsr animate_sprites
@@ -80,10 +102,10 @@ init_screen: .(
 loop:
     lda #$20      ; #$20 is the spacebar Screen Code
     ; TODO Use constant SCREEN_RAM + offset
-    sta $0400, x  ; fill four areas with 256 spacebar characters
-    sta $0500, x
-    sta $0600, x
-    sta $06e8, x
+    sta $c400, x  ; fill four areas with 256 spacebar characters
+    sta $c500, x
+    sta $c600, x
+    sta $c6e8, x
 
     lda #$01      ; set foreground to black in Color RAM
     ; TODO Use constant SCREEN_RAM + offset
@@ -230,14 +252,14 @@ render:
     sta cur_frame
     ; TODO Use constants
     adc #$80
-    sta $07f8
-    sta $07f9
-    sta $07fa
-    sta $07fb
-    sta $07fc
-    sta $07fd
-    sta $07fe
-    sta $07ff
+    sta $c7f8
+    sta $c7f9
+    sta $c7fa
+    sta $c7fb
+    sta $c7fc
+    sta $c7fd
+    sta $c7fe
+    sta $c7ff
 done:
     rts
 .)
@@ -252,5 +274,5 @@ speed_x:   .byte $01, $ff, $01, $02, $ff, $02, $01, $ff
 speed_y:   .byte $ff, $02, $01, $ff, $ff, $02, $02, $01
 
 ; FIXME
-* = $0002
+;* = $0002
 temp: .byte 0
