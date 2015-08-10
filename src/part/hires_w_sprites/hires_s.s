@@ -80,8 +80,6 @@ return
 int_savea       lda     #0
 int_savex       ldx     #0
 int_savey       ldy     #0
-int_saves       ldx     #0
-                txs
 
 	;clear interrupt register
         lsr  $d019
@@ -95,8 +93,6 @@ swap_start
     sta     int_savea+1
     stx     int_savex+1
     sty     int_savey+1
-    tsx
-    stx     int_saves+1
 
 swap_24:
     lda #0
@@ -170,9 +166,9 @@ swap_24:
     sta $d012
     lda #<swap_130
   ;  sta $314
-    sta $ffff
-    lda #>swap_130
     sta $fffe
+    lda #>swap_130
+    sta $ffff
  ;   sta $315
     jmp return
 
@@ -211,12 +207,12 @@ swap_130:
     lda #<swap_207
 ;    sta $314
 
-    sta $ffff
+    sta $fffe
 
 
     lda #>swap_207
 
-    sta $fffe
+    sta $ffff
     ;sta $315
     jmp return
 
@@ -269,7 +265,7 @@ swap_207:
     lda #<swap_24
     ;sta $314
 
-    sta $ffff
+    sta $fffe
     lda #>swap_24
    ; sta $315
 
