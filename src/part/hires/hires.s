@@ -39,6 +39,13 @@ setup
               	lda #$3b ;enable bitmap mode
              	sta	$d011
 
+   ; PVM patch
+        ; hires singlecolor.. w00t?
+        lda     $d016
+        and     %11101111
+        sta     $d016
+
+
 	        lda	#$3d ;vic base address = $4000 (Spindle)
          	sta	$dd02
 
