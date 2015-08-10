@@ -39,8 +39,8 @@ setup
               	lda #$3b ;enable bitmap mode
              	sta	$d011
 
-	        lda	#$16 ;vic base address = $4000
-         	sta	$dd00
+	        lda	#$3d ;vic base address = $4000 (Spindle)
+         	sta	$dd02
 
               	lda #$48 ;video matrix = 5000, bitmap base = 6000
          	sta	$d018

@@ -3,7 +3,7 @@
 		.byt	"EFO2"		; fileformat magic
 		.word	0		; prepare routine
 		.word	setup		; setup routine
-		.word	0		; irq handler
+		.word	swap_start	; irq handler
 		.word	0		; main routine
 		.word	0		; fadeout routine
 		.word	0		; cleanup routine
@@ -25,8 +25,10 @@
 loadaddr
 
 setup
-		lda	#$3d
-		sta	$dd02
+	;	lda	#$3d
+	;	sta	$dd02
+
+        lda #$00
 		sta	$d017
 		sta	$d01b
 		sta	$d01c
@@ -50,18 +52,12 @@ setup
 	lda	#$ff ;enable sprites
 	sta	$d015
 
-_multiplexer
-	lda #$7f
-	sta $dc0d ;cia 1 off
-	sta $dd0d ;cia 2 off
-
-	sei
-	lda #<swap_start
-	;sta $0314
-	sta $ffff
-	lda #>swap_start
-	sta $fffe
-	;sta $0315
+        ; PVM patch
+        ; hires singlecolor.. w00t?
+        lda     $d016
+        and     %11101111
+        sta     $d016
+        
 
 	lda #$f1
 	sta $d01a
@@ -74,21 +70,33 @@ _multiplexer
         rts
 
 return
-	;clear interrupt register
-	lda	#1
-	sta	$d019
 
-    pla
-	tay
-	pla
-	tax
-	pla
+        ; pla
+	; tay
+	; pla
+	; tax
+	; pla
+
+int_savea       lda     #0
+int_savex       ldx     #0
+int_savey       ldy     #0
+int_saves       ldx     #0
+                txs
+
+	;clear interrupt register
+        lsr  $d019
+
 	rti
 
 sprite_ptrs = $53f8
 
 
 swap_start
+    sta     int_savea+1
+    stx     int_savex+1
+    sty     int_savey+1
+    tsx
+    stx     int_saves+1
 
 swap_24:
     lda #0
