@@ -1,7 +1,7 @@
 # add your scenes in the order you want ame0
-part/mc/mc.pef space
+part/vborder/vborder.pef space
 part/sprite/sprite.pef space
+part/mc/mc.pef space
 part/fli/fli.pef space
 part/hires/hires.pef space
-part/vborder/vborder.pef space
 part/hires_w_sprites/hires_s.pef space

@@ -21,7 +21,7 @@
 		.byt	0		; end of tags
 
 		.word	loadaddr
-		* = $3000
+		* = $c000
 loadaddr
 
 setup
@@ -42,13 +42,15 @@ setup
 		lda	#$f9
 		sta	$d012
 
-        lda     $D016 ;enable multicolor
-        ora     #$10
-        sta     $D016
+		lda	$d011
+                and     #%01111111
+		sta	$d011
 
-        lda     #$BB ;enable bitmap mode
+        lda     #$3B ;enable bitmap mode
         sta     $D011
 
+        lda     #$18
+        sta     $d016
 
                 lda #$00
                 sta $d021
@@ -70,8 +72,10 @@ ll:     lda $8000,x
         bne ll
         ; COPY done
 
+; lda #$00
+; sta $3fff
 
-
+;		lsr	$d019
 		rts
 
 interrupt
@@ -79,11 +83,53 @@ interrupt
 	stx	int_savex+1
 	sty	int_savey+1
 
+        lda $d011
+        and #$f7
+        sta $d011
+
+	lda	#$ff
+	sta	$d012
+
+        lda #<irq2        ; +2, 2
+        ldx #>irq2        ; +2, 4
+        sta $fffe               ; +4, 8
+        stx $ffff               ; +4, 12
+
+       
 
 int_savea	lda	#0
 int_savex	ldx	#0
 int_savey	ldy	#0
 	
 		lsr	$d019
+                cli
 		rti
+
+
+irq2
+	sta	int_savea_i2+1
+	stx	int_savex_i2+1
+	sty	int_savey_i2+1
+
+        lda $d011
+        ora #$08
+        sta $d011
+
+	lda	#$f9
+	sta	$d012
+
+        lda #<interrupt        ; +2, 2
+        ldx #>interrupt        ; +2, 4
+        sta $fffe               ; +4, 8
+        stx $ffff               ; +4, 12
+
+int_savea_i2	lda	#0
+int_savex_i2	ldx	#0
+int_savey_i2	ldy	#0
+
+		lsr	$d019
+                cli
+		rti
+	
+
 
