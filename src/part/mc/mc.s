@@ -43,9 +43,6 @@ setup
 	lda     #$3B ;enable bitmap mode
 	sta     $D011
 
-;	lda     #$3d ;vic base = $4000
-;	sta     $DD02
-
 	lda     #$08 ; video matrix = 4000, bitmap base = 6000
 	sta     $D018
 
