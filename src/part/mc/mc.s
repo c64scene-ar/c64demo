@@ -36,7 +36,6 @@ setup
 		lda	#$30
 		sta	$d012
 
-	lda	$d0
 	lda     $D016 ;enable multicolor
 	ora     #$10
 	sta     $D016
