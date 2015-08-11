@@ -131,12 +131,14 @@ l0:
         sta $fffe               ; +4, 8
         stx $ffff               ; +4, 12
 
+        jsr $1200
 
 int_savea       lda     #0
 int_savex       ldx     #0
 int_savey       ldy     #0
 
-        lsr  $d019 
+        dec  $d019 
+        cli
 nmi:
 	rti
 

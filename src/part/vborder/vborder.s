@@ -94,9 +94,7 @@ interrupt
         ldx #>irq2        ; +2, 4
         sta $fffe               ; +4, 8
         stx $ffff               ; +4, 12
-
        
-
 int_savea	lda	#0
 int_savex	ldx	#0
 int_savey	ldy	#0
@@ -107,6 +105,7 @@ int_savey	ldy	#0
 
 
 irq2
+
 	sta	int_savea_i2+1
 	stx	int_savex_i2+1
 	sty	int_savey_i2+1
@@ -115,6 +114,8 @@ irq2
         ora #$08
         sta $d011
 
+        jsr $1200
+
 	lda	#$f9
 	sta	$d012
 
@@ -122,6 +123,8 @@ irq2
         ldx #>interrupt        ; +2, 4
         sta $fffe               ; +4, 8
         stx $ffff               ; +4, 12
+
+
 
 int_savea_i2	lda	#0
 int_savex_i2	ldx	#0

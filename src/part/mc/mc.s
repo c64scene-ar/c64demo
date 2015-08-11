@@ -21,7 +21,7 @@
 		.byt	0		; end of tags
 
 		.word	loadaddr
-		* = $3000
+		* = $c000
 loadaddr
 
 setup
@@ -40,11 +40,11 @@ setup
 	ora     #$10
 	sta     $D016
 
-	lda     #$BB ;enable bitmap mode
+	lda     #$3B ;enable bitmap mode
 	sta     $D011
 
-	lda     #$16 ;vic base = $4000
-	sta     $DD00
+;	lda     #$3d ;vic base = $4000
+;	sta     $DD02
 
 	lda     #$08 ; video matrix = 4000, bitmap base = 6000
 	sta     $D018
@@ -58,16 +58,18 @@ setup
 ;
 	ldx	#0
 memcpy
-	lda	$2000, x
+	lda	$8000, x
 	sta	$d800, x
-	lda	$2100, x
+	lda	$8100, x
 	sta	$d900, x
-	lda	$2200, x
+	lda	$8200, x
 	sta	$da00, x
-	lda	$2300, x
+	lda	$8300, x
 	sta	$db00, x
 	dex
 	bne	memcpy
+        cli
 
         rts
+
 

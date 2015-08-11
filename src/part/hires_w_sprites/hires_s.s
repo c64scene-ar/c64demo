@@ -270,5 +270,9 @@ swap_207:
    ; sta $315
 
     sta $ffff
+
+
+    jsr $1200
+
     jmp return
 

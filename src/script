@@ -1,4 +1,5 @@
 # add your scenes in the order you want ame0
+part/music/music.pef -
 part/vborder/vborder.pef space
 part/sprite/sprite.pef space
 part/mc/mc.pef space

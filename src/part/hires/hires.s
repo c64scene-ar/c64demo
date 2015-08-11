@@ -21,7 +21,7 @@
 		.byt	0		; end of tags
 
 		.word	loadaddr
-		* = $2000
+		* = $8000
 loadaddr
 
 setup

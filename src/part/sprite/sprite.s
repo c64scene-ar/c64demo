@@ -89,6 +89,7 @@ interrupt:
     jsr animate_sprites
 
     asl $d019
+    jsr $1200
 int_savea: lda #0
 int_savex: ldx #0
 int_savey: ldy #0
