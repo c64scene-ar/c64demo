@@ -6,8 +6,8 @@
 #part/luz/luz.pef -
 
 part/mc/mc.pef space
+part/sprite/sprite.pef space
+part/fli/fli.pef space
 part/hires/hires.pef space
 part/hires_w_sprites/hires_s.pef space
-part/fli/fli.pef space
-part/sprite/sprite.pef space
 #- -

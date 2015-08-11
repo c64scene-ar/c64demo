@@ -21,11 +21,15 @@
 		.byt	0		; end of tags
 
 		.word	loadaddr
-		* = $3000
+		* = $2000
 loadaddr
 
 setup
-		lda	#$3d
+
+                ; lda     #$35
+                ; sta     1
+
+		lda	#$3e 
 		sta	$dd02
 		lda	#0
 		sta	$d015
@@ -35,6 +39,7 @@ setup
 		sta	$d01d
 		lda	#$30
 		sta	$d012
+
 
               	lda #$3b ;enable bitmap mode
              	sta	$d011
@@ -46,11 +51,13 @@ setup
         sta     $d016
 
 
-	        lda	#$3d ;vic base address = $4000 (Spindle)
-         	sta	$dd02
+                lda     $d018
+                and     #%00001111
+                ora     #%00101000 ; video matrix = 8800, bitmap base a000
+                sta     $d018
 
-              	lda #$48 ;video matrix = 5000, bitmap base = 6000
-         	sta	$d018
+              ;	lda #$48 ;video matrix = 9000, bitmap base = a000
+         ;	sta	$d018
 
           	lda	#0
             	sta	$d020
