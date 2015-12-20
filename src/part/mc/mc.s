@@ -46,7 +46,7 @@ setup
 	lda     #$08 ; video matrix = 4000, bitmap base = 6000
 	sta     $D018
 
-        lda     #0
+      	lda     #0
 	sta     $D020
 	lda     #15
 	sta     $D021

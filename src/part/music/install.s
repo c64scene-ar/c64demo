@@ -1,8 +1,10 @@
 ; This is an example effect bundled with Spindle
 ; www.linusakesson.net/software/spindle/
 
-INIT		= $152b
-PLAY		= $1200
+;INIT		= $152b
+;PLAY		= $1200
+INIT = $1000
+PLAY = $1003
 
 		; efo header
 

@@ -1,16 +1,16 @@
-#MKPEF=../../spindle/mkpef
-#PEF2PRG=../../spindle/pef2prg
+MKPEF=../../../vendor/spindle-2.1/spindle/mkpef
+PEF2PRG=../../../vendor/spindle-2.1/spindle/pef2prg
 
-#all:		music.pef music.prg
+all:		music.pef music.prg
 
-#install.efo:	install.s
-#		xa -o $@ $<
+install.efo:	install.s
+		xa -o $@ $<
 
-#music.pef:	install.efo music.bin
-#		${MKPEF} -o $@ $^
+music.pef:	install.efo music.bin
+		${MKPEF} -o $@ $^
 
-#%.prg:		%.pef
-#		${PEF2PRG} -o $@ $<
+%.prg:		%.pef
+		${PEF2PRG} -o $@ $<
 
-#music.bin:	music.sid
-#		dd if=$< of=$@ bs=1 skip=124
+music.bin:	TURRO1.sid
+		dd if=$< of=$@ bs=1 skip=124
