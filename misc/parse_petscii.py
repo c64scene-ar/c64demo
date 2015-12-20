@@ -1,9 +1,20 @@
 #!/usr/bin/env python
+import sys
 import packbits
+import struct
 
-fh = open("PVM-1.uca","rb")
+if len(sys.argv) != 2:
+    print("Usage: %s FILE.UCA")
+    sys.exit(1)
+
+fh = open(sys.argv[1], "rb")
 bin = fh.read()
 fh.close()
+
+# Get cols and rows from header
+cols = struct.unpack("i", bin[25:29])[0]
+rows = struct.unpack("i", bin[29:33])[0]
+print("Size: %dx%d" % (cols, rows))
 
 data = bin[69:] # skip ... header?
 
@@ -44,12 +55,12 @@ for i, b in enumerate(data):
         
         x += 1
 
-        if x == 40:
+        if x == cols:
             y += 1
             x = 0
             print ""
 
-        if y == 25:
+        if y == rows:
             print "-" * 80
             last = None
             curr_color = 0
