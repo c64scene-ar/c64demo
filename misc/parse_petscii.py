@@ -16,6 +16,10 @@ cols = struct.unpack("i", bin[25:29])[0]
 rows = struct.unpack("i", bin[29:33])[0]
 print("Size: %dx%d" % (cols, rows))
 
+fh = open("out/imagedata.c64", "w")
+fh.write(str(cols) + "," + str(rows))
+fh.close()
+
 data = bin[69:] # skip ... header?
 
 x, y = 0, 0
@@ -25,8 +29,11 @@ curr_color = 0
 skip_bytes = 14
 frame_n = 0
 
-s_data = "\x00\x20"
-c_data = "\x00\x80"
+#s_data = "\x00\x20"
+#c_data = "\x00\x80"
+
+s_data = ""
+c_data = ""
 
 for i, b in enumerate(data):
     if skip_bytes:
@@ -67,11 +74,13 @@ for i, b in enumerate(data):
             x, y = 0, 0
             skip_bytes = 14 # skip ... frame header?
 
-            fh_s = open("screen-" + str(frame_n) + ".c64", "wb")
-            fh_c = open("color-" + str(frame_n) + ".c64", "wb")
+            fh_s = open("out/screen-" + str(frame_n) + ".c64", "wb")
+            fh_c = open("out/color-" + str(frame_n) + ".c64", "wb")
 
-            fh_s.write(packbits.encode(s_data))
-            fh_c.write(packbits.encode(c_data))
+            #fh_s.write(packbits.encode(s_data))
+            #fh_c.write(packbits.encode(c_data))
+            fh_s.write(s_data)
+            fh_c.write(c_data)
 
             fh_s.close()
             fh_c.close()
