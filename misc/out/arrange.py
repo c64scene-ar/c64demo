@@ -1,6 +1,9 @@
 import sys
 import struct
 
+# This script is used to parse one petscii frame which is bigger than 40x25 in
+# various screens (of 40x25)
+
 def find_addr(start):
   # http://codebase64.org/doku.php?id=base:vicii_memory_organizing
   # https://www.c64-wiki.com/index.php/Bank_Switching
@@ -18,21 +21,28 @@ def find_addr(start):
 
   return start
  
-def split_data(name, data, w, addr):
+def split_data(name, data, w, h, addr):
+  l = ["" for _ in range(w*h/40/25)]
+  for i in range(0, w * h, 40):
+    # read one slice of 40 chars
+    line = data[i:i+40]       #  _0__1__2_  
+  
+    # calculate the "slot" where it belongs, by
+    # using the horizontal/vertial screen "indexes" (q_h/q_v)
+    q_h = (i/40) % (w/40)     # 0|0_|1_|2_|  
+    q_v = (i/40/(w/40))/25    # 1|3_|4_|5_|   
+    slot = q_h + q_v * w/40   # 3|6_|7_|8_| 
+    l[slot] += line
+  
   n = 0
   screen_tbl = []
-  for j in range(0, w, 40):
-    sc_data = []
-    for i in range(j, len(data), w):
-      sc_data.append(data[i:i+40])
-    sc_data = "".join(sc_data)
-
+  for sc_data in l:
     addr = find_addr(addr)
     if addr is None:
-      print "Cannot fit the " + name + " RAM at", i, "petscii too big?"
+      print "Cannot fit the " + name + " RAM at", s, "petscii too big?"
       sys.exit(0)
 
-    sc_data = struct.pack("<H", addr) + data[i:i+w]
+    sc_data = struct.pack("<H", addr) + sc_data # data[i:i+w]
     fh = open("split/" + name + "-" + str(n) + ".c64", "wb")
     fh.write(sc_data)
     fh.close()
@@ -40,15 +50,14 @@ def split_data(name, data, w, addr):
     screen_tbl.append("$" + hex(addr)[2:])
 
   print name + "_tbl: .word " + ",".join(screen_tbl)
-
   return addr
         
 screen_ram = open("screen-0.c64").read()
 color_ram = open("color-0.c64").read()
 w, h = map(int, open("imagedata.c64").read().split(","))
 
-addr = split_data("screen", screen_ram, w, 0)
-addr = split_data("color", color_ram, w, addr)
+addr = split_data("screen", screen_ram, w, h, 0)
+addr = split_data("color", color_ram, w, h, addr)
 
 print "idiv25timesw: .byt " + ",".join(str(i/25*w) for i in range (255))
 print "idiv40: .byt " + ",".join(str(i / 40) for i in range (255))
