@@ -59,7 +59,7 @@ w, h = map(int, open("imagedata.c64").read().split(","))
 addr = split_data("screen", screen_ram, w, h, 0)
 addr = split_data("color", color_ram, w, h, addr)
 
-print "idiv25timesw: .byt " + ",".join(str(i/25*w) for i in range (255))
+print "idiv25timeswdiv40: .byt " + ",".join(str((i/25)*(w/40)) for i in range (255))
 print "idiv40: .byt " + ",".join(str(i / 40) for i in range (255))
 print "imod25: .byt " + ",".join(str(i % 25) for i in range (255))
 print "imod40: .byt " + ",".join(str(i % 40) for i in range (255))
