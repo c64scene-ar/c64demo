@@ -9,6 +9,9 @@ def find_addr(start):
   # https://www.c64-wiki.com/index.php/Bank_Switching
   # http://static1.squarespace.com/static/511651d6e4b0a31c035e30aa/t/51699707e4b0e454d771ddd6/1365874440449/memory_map.png
 
+  # TODO: Tener en cuenta que el charset default (petscii!) se selecciona desde los bancos 0 y 2,
+  #       sin embargo 0x9000-0xa000 (banco 2 empieza en $8000) muestra siempre chars al vic. esto puede
+  #       no ser ningun problema, solo hay que tener cuidado y tenerlo en cuenta
   blacklist = [ ( 0x0000, 0x4000),   # spindle, music, zero page vars, code
                 ( 0x4000, 0x5800),   # 0x800 * 2 (charset size) + 0x400 * 2 (screen size) for double buffering
                 ( 0x9000, 0xa000),   # charset (from VIC)

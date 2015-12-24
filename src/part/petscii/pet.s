@@ -71,16 +71,16 @@ setup
         ;
         ldx #0
 memcpy
-        ;lda $8000, x
+        ;lda $7c00, x
         ;sta $d800, x
-        ;lda $8100, x
+        ;lda $7d00, x
         ;sta $d900, x
-        ;lda $8200, x
+        ;lda $7e00, x
         ;sta $da00, x
-        ;lda $8300, x
+        ;lda $7f00, x
         ;sta $db00, x
-        ;dex
-        ;bne memcpy
+        dex
+        bne memcpy
         rts
 
 interrupt
