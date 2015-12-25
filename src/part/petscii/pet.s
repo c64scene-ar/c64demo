@@ -47,7 +47,7 @@ setup
         ;
         ; http://www.linusakesson.net/software/spindle/v2.php
         ;
-        lda     #$3d       ; $4000-$7fff (Spindle)
+        lda     #$3c       ; $0000-$3fff (Spindle)
         sta     $dd02
 
         ; Screen configuration
@@ -56,7 +56,8 @@ setup
         ;
         lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
         and     $d018
-        ora     #%01100000 ; $D018 = %0110xxxx -> screenmem is at $1800 ($5800) 
+        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
+                           ; Swap = $3c00 (%1111xxxx)
         sta     $d018
  
         ; Setup screen colors
@@ -69,19 +70,54 @@ setup
         ;
         ; memcpy((void*)0xd800, (void*)0x2000, 0x400);
         ;
+        clc
+        ldx viewport_x
+        lda idiv40, x
+        ldx viewport_y
+        adc idiv25timeswdiv40,x
+        asl ; each element on screen_tbl is a 16-bit number
+        tax
+        ldy screen_tbl, x
+        sty l1+1
+        sty l2+1
+        sty l3+1
+        sty l4+1
+        ldy screen_tbl+1, x
+        sty l1+2
+        iny
+        sty l2+2
+        iny
+        sty l3+2
+        iny
+        sty l4+2 
+
         ldx #0
-memcpy
-        ;lda $7c00, x
-        ;sta $d800, x
-        ;lda $7d00, x
-        ;sta $d900, x
-        ;lda $7e00, x
-        ;sta $da00, x
-        ;lda $7f00, x
-        ;sta $db00, x
+memcpy_s
+l1      lda $5800, x
+        sta $3800, x
+l2      lda $5900, x
+        sta $3900, x
+l3      lda $5a00, x
+        sta $3a00, x
+l4      lda $5b00, x
+        sta $3b00, x
         dex
-        bne memcpy
-        rts
+        bne memcpy_s
+ 
+        ldx #0
+memcpy_c
+c1      lda $7c00, x
+        sta $d800, x
+c2      lda $7d00, x
+        sta $d900, x
+c3      lda $7e00, x
+        sta $da00, x
+c       lda $7f00, x
+        sta $db00, x
+        dex
+        bne memcpy_c
+
+       rts
 
 interrupt
         sta savea+1
