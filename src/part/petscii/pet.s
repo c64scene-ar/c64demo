@@ -24,6 +24,26 @@
         * = $2000
 loadaddr
 
+
+;
+; getslot_ptr( x, y )
+;
+; Given a pair of coordinates (0..40,0.25), received in the
+; x/y registers, returns an offset that can be used to
+; access either screen_tbl or color_tbl, tables which contain
+; pointers to where the petscii frames are allocated.
+; returns both in a and x
+;
+
+getslot_ptr
+        lda idiv40, x
+        adc idiv25timeswdiv40,y
+        asl ; each element on screen_tbl is a 16-bit number
+            ; "a" now contains the offset in screen_tbl, which contains a pointer
+            ; to the data of the screen pointed by the viewport.
+        tax
+        rts
+ 
 setup
        
         ;lda     #0
@@ -72,11 +92,9 @@ setup
         ;
         clc
         ldx viewport_x
-        lda idiv40, x
-        ldx viewport_y
-        adc idiv25timeswdiv40,x
-        asl ; each element on screen_tbl is a 16-bit number
-        tax
+        ldy viewport_y
+        jsr getslot_ptr
+        ; TODO - generalize and copy color matrix as well
         ldy screen_tbl, x
         sty l1+1
         sty l2+1
@@ -92,6 +110,8 @@ setup
         sty l4+2 
 
         ldx #0
+
+
 memcpy_s
 l1      lda $5800, x
         sta $3800, x
@@ -116,13 +136,48 @@ c       lda $7f00, x
         sta $db00, x
         dex
         bne memcpy_c
+        rts
 
-       rts
+;
+; memcpy_from_h( dst, src, x )
+;
+; copies all bytes starting from addr $4242
+; until a position such as pos % 40 == 0, this is, the
+; end of the screen that $4242 belongs to.
+memcpy_from_h
+        sec
+        lda #40
+mfh_p2  ldx #$41
+        sbc imod40, x
+        tax
+mfh_loop
+mfh_p1  lda $4242, x
+mfh_p0  sta $4343, x
+        dex
+        bne mfh_loop
+rts
+        
+;
+; memcpy_to_h( src, dst, x )
+;
+; traditional memcpy, src, dst, n.
+memcpy_to_h
+        clc
+mth_p2  ldx #$41
+
+mth_loop
+mth_p1  lda $4242, x
+mth_p0  sta $4343, x
+        dex
+        bne mth_loop
+rts
+
 
 interrupt
         sta savea+1
         stx savex+1
         sty savey+1
+
 
         ; Keyboard polling
         ;
@@ -136,40 +191,47 @@ interrupt
         bne nokey ; any other key = no key
       
         inc cnt
-scrollear
-        lda $d016
+scroll_v
+        ;lda $d016 ; horizontal
+        lda $d011  ; vertical
         and #%11111000
         ora cnt
-        sta $d016
-
+        ;sta $d016  ; horizontal
+        sta $d011  ; vertical
         ldx cnt
         cpx #$8
         bne nokey
 
+        ; reset scroll counter
         ldx #$00
         stx cnt
-        ; hay que copiar
-scr_cpy
-        ;lda $2000, x
-        ;sta $2001, x
-        ;lda $2100, x
-        ;sta $2101, x
-        ;lda $2200, x
-        ;sta $2201, x
-        ;lda $2300, x
-        ;sta $2301, x
 
-        ;lda $d800, x
-        ;sta $d801, x
-        ;lda $d900, x
-        ;sta $d901, x
-        ;lda $da00, x
-        ;sta $da01, x
-        ;lda $db00, x
-        ;sta $db01, x
+        ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 1), viewport_x % 40 )
+        inc viewport_y
+        ldx viewport_x
+        ldy viewport_y
+        jsr getslot_ptr
+        
+        lda screen_tbl, x
+        sta mfh_p1+1
+        lda screen_tbl+1, x
+        sta mfh_p1+2
 
-        dex
-        bne scr_cpy
+        lda display_addr
+        sta mfh_p0+1
+        lda display_addr+1
+        sta mfh_p0+2
+
+        ldx viewport_x
+        lda imod40, x
+        sta mfh_p2+1     ; copy from viewport_x % 40
+                         ; TODO offset within the screen itself
+
+        jsr memcpy_from_h
+        ; // memcopy_from_h
+        
+        ; need to shift the entire screen up, and copy the next row
+        ; from a position defined by the viewport + the screen table
 
 nokey
 
@@ -183,5 +245,7 @@ savey   ldy #0
 
 cnt .byt 00
 copiando .byt 00
+
+display_addr .word $3800, $3c00
 
 #include "parser/split/info.s"
