@@ -36,6 +36,7 @@ loadaddr
 ;
 
 getslot_ptr
+        clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
         asl ; each element on screen_tbl is a 16-bit number
@@ -76,7 +77,7 @@ setup
         ;
         lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
         and     $d018
-        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
+        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $pl3800 
                            ; Swap = $3c00 (%1111xxxx)
         sta     $d018
  
@@ -146,7 +147,7 @@ c       lda $7f00, x
 ; end of the screen that $4242 belongs to.
 memcpy_from_h
         sec
-        lda #40
+        lda #39
 mfh_p2  ldx #$41
         sbc imod40, x
         tax
@@ -154,7 +155,7 @@ mfh_loop
 mfh_p1  lda $4242, x
 mfh_p0  sta $4343, x
         dex
-        bne mfh_loop
+        bpl mfh_loop
 rts
         
 ;
@@ -169,9 +170,23 @@ mth_loop
 mth_p1  lda $4242, x
 mth_p0  sta $4343, x
         dex
-        bne mth_loop
+        bpl mth_loop
 rts
 
+shift_up
+        ldx #0
+shift_up_loop
+        lda $3828,x
+        sta $3800,x
+        lda $3928,x
+        sta $3900,x
+        lda $3a28,x
+        sta $3a00,x
+        ;lda $3b28,x
+        ;sta $3b00,x
+        dex
+        bne shift_up_loop
+        rts
 
 interrupt
         sta savea+1
@@ -191,7 +206,8 @@ interrupt
         bne nokey ; any other key = no key
       
         inc cnt
-scroll_v
+
+scroll_v_down
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
         and #%11111000
@@ -206,10 +222,16 @@ scroll_v
         ldx #$00
         stx cnt
 
-        ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 1), viewport_x % 40 )
+        ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
+
         inc viewport_y
+        jsr shift_up
+
         ldx viewport_x
-        ldy viewport_y
+        lda viewport_y
+        clc
+        adc #25 ; last line of the viewport
+        tay
         jsr getslot_ptr
         
         lda screen_tbl, x
@@ -217,19 +239,24 @@ scroll_v
         lda screen_tbl+1, x
         sta mfh_p1+2
 
+        ; copy to line #25 (0x3c0) of the framebuffer
         lda display_addr
+        clc    
+        adc #$c0
         sta mfh_p0+1
         lda display_addr+1
+        clc
+        adc #3
         sta mfh_p0+2
 
         ldx viewport_x
         lda imod40, x
-        sta mfh_p2+1     ; copy from viewport_x % 40
-                         ; TODO offset within the screen itself
-
+        sta mfh_p2+1   ; internal offset, copy from viewport_x % 40
         jsr memcpy_from_h
+
         ; // memcopy_from_h
         
+        ; TODO memcopy_to_h()
         ; need to shift the entire screen up, and copy the next row
         ; from a position defined by the viewport + the screen table
 
@@ -246,6 +273,7 @@ savey   ldy #0
 cnt .byt 00
 copiando .byt 00
 
+; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk
 display_addr .word $3800, $3c00
 
 #include "parser/split/info.s"
