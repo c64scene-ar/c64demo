@@ -46,7 +46,15 @@ getslot_ptr
         rts
  
 setup
-       
+      ; initial shift
+      ;lda $d016 ; horizontal
+       lda $d011  ; vertical
+       and #%11111000
+       ora cnt
+       ;sta $d016  ; horizontal
+       sta $d011  ; vertical
+
+
         ;lda     #0
         ;sta     $d015 ; Disable sprites
         ;sta     $d017 ; Disable sprite double height
@@ -178,13 +186,14 @@ shift_up
 shift_up_loop
         lda $3828,x
         sta $3800,x
-        lda $3928,x
-        sta $3900,x
-        lda $3a28,x
-        sta $3a00,x
-        ;lda $3b28,x
-        ;sta $3b00,x
-        dex
+        lda $3918,x
+        sta $38f0,x
+        lda $3a08,x
+        sta $39e0,x
+        lda $3af8,x
+        sta $3ad0,x ; line 24
+        inx
+        cpx #$f0
         bne shift_up_loop
         rts
 
@@ -205,7 +214,8 @@ interrupt
         cmp #$fb  ; right/left cursor
         bne nokey ; any other key = no key
       
-        inc cnt
+        ; inc cnt ; opposite direction
+        dec cnt
 
 scroll_v_down
         ;lda $d016 ; horizontal
@@ -215,11 +225,13 @@ scroll_v_down
         ;sta $d016  ; horizontal
         sta $d011  ; vertical
         ldx cnt
-        cpx #$8
-        bne nokey
+        ;cpx #$8   ; opposite direction
+        cpx #0
+        bne nocopy
 
         ; reset scroll counter
-        ldx #$00
+        ;ldx #$00  ; opposite direction
+        ldx #8
         stx cnt
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
@@ -235,6 +247,10 @@ scroll_v_down
         jsr getslot_ptr
         
         lda screen_tbl, x
+        ; (y%25) * w + x
+        ldx viewport_x
+        clc
+        adc imod25times40,x
         sta mfh_p1+1
         lda screen_tbl+1, x
         sta mfh_p1+2
@@ -245,13 +261,14 @@ scroll_v_down
         adc #$c0
         sta mfh_p0+1
         lda display_addr+1
-        clc
+        ;clc ; TODO we probably dont want this
         adc #3
         sta mfh_p0+2
 
         ldx viewport_x
         lda imod40, x
         sta mfh_p2+1   ; internal offset, copy from viewport_x % 40
+
         jsr memcpy_from_h
 
         ; // memcopy_from_h
@@ -260,6 +277,7 @@ scroll_v_down
         ; need to shift the entire screen up, and copy the next row
         ; from a position defined by the viewport + the screen table
 
+nocopy
 nokey
 
 savea   lda #0
@@ -270,7 +288,7 @@ savey   ldy #0
 
         rti
 
-cnt .byt 00
+cnt .byt 7
 copiando .byt 00
 
 ; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk

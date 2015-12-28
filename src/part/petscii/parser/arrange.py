@@ -79,6 +79,10 @@ print "imod40:"
 for j in range(32):
   print "  .byt " + ",".join(str(i % 40) for i in range (j*16, j*16+16))
 
+print "imod25times40:"
+for j in range(32):
+  print "  .byt " + ",".join(str((i%25) * 40) for i in range (j*8, j*8+8))
+
 print "viewport_x: .byt 0"
 
 print "viewport_y: .byt 0"
