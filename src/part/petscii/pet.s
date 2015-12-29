@@ -48,11 +48,11 @@ getslot_ptr
 setup
       ; initial shift
       ;lda $d016 ; horizontal
-       lda $d011  ; vertical
-       and #%11111000
-       ora cnt
+       ;lda $d011  ; vertical
+       ;and #%11111000
+       ;ora cnt
        ;sta $d016  ; horizontal
-       sta $d011  ; vertical
+       ;sta $d011  ; vertical
 
 
         ;lda     #0
@@ -183,18 +183,25 @@ rts
 
 shift_up
         ldx #0
+        ldy #4
 shift_up_loop
-        lda $3828,x
-        sta $3800,x
-        lda $3918,x
-        sta $38f0,x
-        lda $3a08,x
-        sta $39e0,x
-        lda $3af8,x
-        sta $3ad0,x ; line 24
+su_l    lda $3828,x
+su_s    sta $3800,x
         inx
-        cpx #$f0
+        cpx #0
         bne shift_up_loop
+        dey
+        cpy #0
+        beq shift_up_done
+        ldx #0
+        inc su_l+2
+        inc su_s+2
+        jmp shift_up_loop
+
+shift_up_done
+        lda #$38
+        sta su_l+2
+        sta su_s+2
         rts
 
 interrupt
@@ -219,20 +226,20 @@ interrupt
 
 scroll_v_down
         ;lda $d016 ; horizontal
-        lda $d011  ; vertical
-        and #%11111000
-        ora cnt
+        ;lda $d011  ; vertical
+        ;and #%11111000
+        ;ora cnt
         ;sta $d016  ; horizontal
-        sta $d011  ; vertical
-        ldx cnt
+        ;sta $d011  ; vertical
+        ;ldx cnt
         ;cpx #$8   ; opposite direction
-        cpx #0
-        bne nocopy
+        ;cpx #0
+        ;bne nocopy
 
         ; reset scroll counter
         ;ldx #$00  ; opposite direction
-        ldx #8
-        stx cnt
+        ;ldx #8
+        ;stx cnt
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
 
@@ -246,16 +253,22 @@ scroll_v_down
         tay
         jsr getslot_ptr
         
-        lda screen_tbl, x
-        ; (y%25) * w + x
-        ldx viewport_x
+
         clc
-        adc imod25times40,x
+        lda screen_tbl, x
+        ldy viewport_y
+        ldx viewport_x
+        ldx imod25times40, y
+        ;adc imod40, x
+
+        clc
+        adc #$c0
         sta mfh_p1+1
         lda screen_tbl+1, x
+        adc #3
         sta mfh_p1+2
 
-        ; copy to line #25 (0x3c0) of the framebuffer
+        ; copy to line #25 (offset 0x3c0) of the framebuffer
         lda display_addr
         clc    
         adc #$c0

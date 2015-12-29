@@ -81,7 +81,7 @@ for j in range(32):
 
 print "imod25times40:"
 for j in range(32):
-  print "  .byt " + ",".join(str((i%25) * 40) for i in range (j*8, j*8+8))
+  print "  .word " + ",".join(str((i%25) * 40) for i in range (j*8, j*8+8))
 
 print "viewport_x: .byt 0"
 
