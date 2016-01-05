@@ -48,11 +48,11 @@ getslot_ptr
 setup
       ; initial shift
       ;lda $d016 ; horizontal
-       ;lda $d011  ; vertical
-       ;and #%11111000
-       ;ora cnt
-       ;sta $d016  ; horizontal
-       ;sta $d011  ; vertical
+      lda $d011  ; vertical
+      and #%11111000
+      ora cnt
+      ;sta $d016  ; horizontal
+      sta $d011  ; vertical
 
 
         ;lda     #0
@@ -164,7 +164,7 @@ mfh_p1  lda $4242, x
 mfh_p0  sta $4343, x
         dex
         bpl mfh_loop
-rts
+        rts
         
 ;
 ; memcpy_to_h( src, dst, x )
@@ -179,14 +179,53 @@ mth_p1  lda $4242, x
 mth_p0  sta $4343, x
         dex
         bpl mth_loop
-rts
+        rts
 
+
+;------------------------
+bank_swap
+        ldy swap_addr+2
+        ldx swap_addr+0
+        stx swap_addr+2
+        sty swap_addr+0
+        ldy swap_addr+3
+        ldx swap_addr+1
+        stx swap_addr+3
+        sty swap_addr+1
+        cpy #$3c        ; WARNING hardcoded, depends on using $3cxx for one bank
+        bne swap_to_two
+swap_to_one
+        ;
+        ; Screen configuration
+        ;
+        ; http://codebase64.org/doku.php?id=base:vicii_memory_organizing
+        ;
+        ; Active frame buffer at $3800, display at $3c00
+        ;
+        lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
+        and     $d018
+        ora     #%11110000 ; $D018 = %1111xxxx -> screenmem is at $3c00 
+        sta     $d018
+        jmp swap_finish
+swap_to_two
+        ;
+        ; Active frame buffer at $3c00, display at $3800
+        ;
+        lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
+        and     $d018
+        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
+        sta     $d018
+swap_finish
+        rts
+
+
+;------------------------
 shift_up
         ldx #0
         ldy #4
 shift_up_loop
-su_l    lda $3828,x
-su_s    sta $3800,x
+su_s    lda $3828,x
+su_d    sta $3800,x
         inx
         cpx #0
         bne shift_up_loop
@@ -194,21 +233,21 @@ su_s    sta $3800,x
         cpy #0
         beq shift_up_done
         ldx #0
-        inc su_l+2
         inc su_s+2
+        inc su_d+2
         jmp shift_up_loop
 
 shift_up_done
         lda #$38
-        sta su_l+2
         sta su_s+2
+        sta su_d+2
         rts
+;------------------------
 
 interrupt
         sta savea+1
         stx savex+1
         sty savey+1
-
 
         ; Keyboard polling
         ;
@@ -219,70 +258,89 @@ interrupt
         sta $dc00 ; select keyboard column
         lda $dc01 ; read key statuses
         cmp #$fb  ; right/left cursor
-        bne nokey ; any other key = no key
-      
-        ; inc cnt ; opposite direction
+        beq somekey ; any other key = no key
+        jmp nokey
+somekey:
+        ;inc cnt ; opposite direction
         dec cnt
 
 scroll_v_down
         ;lda $d016 ; horizontal
-        ;lda $d011  ; vertical
-        ;and #%11111000
-        ;ora cnt
+        lda $d011  ; vertical
+        and #%11111000
+        ora cnt
         ;sta $d016  ; horizontal
-        ;sta $d011  ; vertical
-        ;ldx cnt
+        sta $d011  ; vertical
+        ldx cnt
         ;cpx #$8   ; opposite direction
-        ;cpx #0
-        ;bne nocopy
+        cpx #0
+        bne nocopy
 
         ; reset scroll counter
         ;ldx #$00  ; opposite direction
-        ;ldx #8
-        ;stx cnt
+        ldx #7
+        stx cnt
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
 
         inc viewport_y
+
+        lda swap_addr
+        clc
+        adc #$28
+        sta su_s+1
+        lda swap_addr+1
+        sta su_s+2
+        lda swap_addr
+        sta su_d+1
+        lda swap_addr+1
+        sta su_d+2
+
         jsr shift_up
 
         ldx viewport_x
         lda viewport_y
         clc
-        adc #25 ; last line of the viewport
+        adc #24 ; last line of the viewport (24 + 1 incremented before)
         tay
-        jsr getslot_ptr
+        jsr getslot_ptr ; returns in x, a
         
-
+        ; TODO adc viewport_x % 40 to the memcpy_from "x" parameter
+        lda viewport_y
         clc
-        lda screen_tbl, x
-        ldy viewport_y
-        ldx viewport_x
-        ldx imod25times40, y
-        ;adc imod40, x
-
+        adc #24
+        asl
+        tay
         clc
-        adc #$c0
+        lda imod25times40, y
+        adc screen_tbl, x
         sta mfh_p1+1
-        lda screen_tbl+1, x
-        adc #3
+        lda imod25times40+1, y
+        adc screen_tbl+1, x
         sta mfh_p1+2
 
         ; copy to line #25 (offset 0x3c0) of the framebuffer
-        lda display_addr
+        lda swap_addr
         clc    
         adc #$c0
         sta mfh_p0+1
-        lda display_addr+1
-        ;clc ; TODO we probably dont want this
+        lda swap_addr+1
+        clc ; TODO we probably dont want this
         adc #3
         sta mfh_p0+2
 
         ldx viewport_x
         lda imod40, x
-        sta mfh_p2+1   ; internal offset, copy from viewport_x % 40
+        sta mfh_p2+1   ; internal offset, copy_from viewport_x % 40 (until the end of the screen line)
 
         jsr memcpy_from_h
+
+        lda $d011  ; vertical
+        and #%11111000
+        ora cnt
+        ;sta $d016  ; horizontal
+        sta $d011  ; vertical
+
 
         ; // memcopy_from_h
         
@@ -305,6 +363,6 @@ cnt .byt 7
 copiando .byt 00
 
 ; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk
-display_addr .word $3800, $3c00
+swap_addr .word $3800, $3c00
 
 #include "parser/split/info.s"
