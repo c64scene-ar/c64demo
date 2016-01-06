@@ -46,14 +46,13 @@ getslot_ptr
         rts
  
 setup
-      ; initial shift
-      ;lda $d016 ; horizontal
-      lda $d011  ; vertical
-      and #%11111000
-      ora cnt
-      ;sta $d016  ; horizontal
-      sta $d011  ; vertical
 
+      ; initial irq + shift
+      lda #$1b
+      ora cnt
+      sta $d011
+      lda #$1e
+      sta $d012
 
         ;lda     #0
         ;sta     $d015 ; Disable sprites
@@ -188,7 +187,7 @@ mth_p0  sta $4343, x
 ;------------------------
 swap_banks
         ldy swap_addr+2 
-        ldx swap_addr+0
+        ldx swap_addr+0 
         stx swap_addr+2 
         sty swap_addr+0 
         ldy swap_addr+3
@@ -207,7 +206,7 @@ swap_to_one
         ;
         lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
         and     $d018
-        ora     #%11110000 ; $D018 = %1111xxxx -> screenmem is at $3c00 
+        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
         sta     $d018
         jmp swap_finish
 swap_to_two
@@ -216,7 +215,8 @@ swap_to_two
         ;
         lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
         and     $d018
-        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
+
+        ora     #%11110000 ; $D018 = %1111xxxx -> screenmem is at $3c00 
         sta     $d018
 swap_finish
         rts
@@ -265,9 +265,14 @@ screen_copy_done
 ;------------------------
 
 interrupt
+        sei
         sta savea+1
         stx savex+1
         sty savey+1
+ 
+        lda #$00
+        sta $d020
+        sta $d021
 
         ; Keyboard polling
         ;
@@ -277,7 +282,8 @@ interrupt
         lda #$fe
         sta $dc00 ; select keyboard column
         lda $dc01 ; read key statuses
-        cmp #$fb  ; right/left cursor
+;       cmp #$fb  ; right/left cursor
+        cmp #$7f  ; right/left cursor
         beq somekey ; any other key = no key
         jmp nokey
 somekey:
@@ -293,7 +299,7 @@ vscroll_down
         sta $d011  ; vertical
         ldx cnt
         ;cpx #$8   ; opposite direction
-        cpx #0
+        cpx #$0
         beq vscroll_down_copy
         jmp nocopy
 
@@ -361,14 +367,22 @@ vscroll_down_copy
 
  wait_for_vblank
         lda $d012
-        cmp #$ff
+        cmp #$1e
         bne wait_for_vblank
+        lda $d011
+        and #%10000000
+        cmp #%00000000
+        bne wait_for_vblank
+
+        ldx #7
+        stx cnt
 
         lda $d011  ; vertical
         and #%11111000
         ora cnt
         ;sta $d016  ; horizontal
         sta $d011  ; vertical
+
         jsr swap_banks
 
         jsr copy_to_swap
@@ -386,7 +400,13 @@ savea   lda #0
 savex   ldx #0
 savey   ldy #0
     
+        lda #$00
+        sta $d020
+        sta $d021
+
         lsr $d019 ; ack interrupt
+        cli
+
 
         rti
 
