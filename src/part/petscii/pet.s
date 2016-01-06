@@ -117,7 +117,6 @@ setup
         sty l3+2
         iny
         sty l4+2 
-
         ldx #0
 
 
@@ -145,6 +144,10 @@ c       lda $7f00, x
         sta $db00, x
         dex
         bne memcpy_c
+
+        ; copy initial screen to swap
+        jsr copy_to_swap
+        jsr swap_banks
         rts
 
 ;
@@ -183,11 +186,11 @@ mth_p0  sta $4343, x
 
 
 ;------------------------
-bank_swap
-        ldy swap_addr+2
+swap_banks
+        ldy swap_addr+2 
         ldx swap_addr+0
-        stx swap_addr+2
-        sty swap_addr+0
+        stx swap_addr+2 
+        sty swap_addr+0 
         ldy swap_addr+3
         ldx swap_addr+1
         stx swap_addr+3
@@ -218,29 +221,46 @@ swap_to_two
 swap_finish
         rts
 
+; copy current screen to swap
+copy_to_swap
+        ; the second element is the currently selected bank
+        ldx swap_addr+2
+        stx sc_s+1
+        ldx swap_addr+3
+        stx sc_s+2
+
+        ; the first one is the frame buffer
+        ldx swap_addr+0
+        stx sc_d+1
+        ldx swap_addr+1
+        stx sc_d+2
+        jsr screen_copy
+        rts
 
 ;------------------------
-shift_up
+screen_copy
         ldx #0
         ldy #4
-shift_up_loop
-su_s    lda $3828,x
-su_d    sta $3800,x
+screen_copy_loop
+sc_s    lda $3828,x
+sc_d    sta $3800,x
         inx
         cpx #0
-        bne shift_up_loop
+        bne screen_copy_loop
         dey
         cpy #0
-        beq shift_up_done
+        beq screen_copy_done
         ldx #0
-        inc su_s+2
-        inc su_d+2
-        jmp shift_up_loop
+        inc sc_s+2
+        inc sc_d+2
+        jmp screen_copy_loop
 
-shift_up_done
+screen_copy_done
         lda #$38
-        sta su_s+2
-        sta su_d+2
+        sta sc_s+2
+        sta sc_d+2
+
+
         rts
 ;------------------------
 
@@ -264,7 +284,7 @@ somekey:
         ;inc cnt ; opposite direction
         dec cnt
 
-scroll_v_down
+vscroll_down
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
         and #%11111000
@@ -274,8 +294,10 @@ scroll_v_down
         ldx cnt
         ;cpx #$8   ; opposite direction
         cpx #0
-        bne nocopy
+        beq vscroll_down_copy
+        jmp nocopy
 
+vscroll_down_copy
         ; reset scroll counter
         ;ldx #$00  ; opposite direction
         ldx #7
@@ -283,21 +305,23 @@ scroll_v_down
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
 
+        ; shift the screen up, by copying from the current view + 40 (0x28) to the current view address
         inc viewport_y
-
         lda swap_addr
         clc
         adc #$28
-        sta su_s+1
+        sta sc_s+1
         lda swap_addr+1
-        sta su_s+2
+        sta sc_s+2
         lda swap_addr
-        sta su_d+1
+        sta sc_d+1
         lda swap_addr+1
-        sta su_d+2
+        sta sc_d+2
+        jsr screen_copy
 
-        jsr shift_up
-
+        ; take the last line from the corresponding screen, which can
+        ; be found by getting the current screen slot and then applying
+        ; the offset needed.
         ldx viewport_x
         lda viewport_y
         clc
@@ -335,12 +359,19 @@ scroll_v_down
 
         jsr memcpy_from_h
 
+ wait_for_vblank
+        lda $d012
+        cmp #$ff
+        bne wait_for_vblank
+
         lda $d011  ; vertical
         and #%11111000
         ora cnt
         ;sta $d016  ; horizontal
         sta $d011  ; vertical
+        jsr swap_banks
 
+        jsr copy_to_swap
 
         ; // memcopy_from_h
         
@@ -363,6 +394,7 @@ cnt .byt 7
 copiando .byt 00
 
 ; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk
-swap_addr .word $3800, $3c00
+;swap_addr .word $3800, $3c00
+swap_addr .word $3c00, $3800
 
 #include "parser/split/info.s"
