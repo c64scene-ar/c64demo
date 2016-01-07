@@ -47,13 +47,13 @@ getslot_ptr
  
 setup
 
-        ; initial irq + shift
-        lda #$1b
-        ora cnt
-        sta $d011
-        lda #$1e
-        sta $d012
- 
+      ; initial irq + shift
+      lda #$1b
+      ora cnt
+      sta $d011
+      lda #$1e
+      sta $d012
+
         ;lda     #0
         ;sta     $d015 ; Disable sprites
         ;sta     $d017 ; Disable sprite double height
@@ -260,30 +260,6 @@ screen_copy_done
         sta sc_s+2
         sta sc_d+2
 
-        rts
-
-;------------------------
-screen_copy_back
-        ldx #$ff
-        ldy #4
-screen_copy_b_loop
-sc_b_s  lda $6666,x
-sc_b_d  sta $7777,x
-        dex
-        cpx #$ff
-        bne screen_copy_b_loop
-        dey
-        cpy #0
-        beq screen_copy_b_done
-        ldx #$ff
-        dec sc_b_s+2
-        dec sc_b_d+2
-        jmp screen_copy_b_loop
-
-screen_copy_b_done
-        lda #$38
-        sta sc_b_s+2
-        sta sc_b_d+2
 
         rts
 ;------------------------
@@ -298,48 +274,23 @@ interrupt
         sta $d020
         sta $d021
 
-        ; Keyboard handling
+        ; Keyboard polling
         ;
         ; http://codebase64.org/doku.php?id=base:reading_the_keyboard
         ; http://sta.c64.org/cbm64kbdlay.html
         ;
         lda #$fe
-        sta $dc00 ; up/down cursor row
+        sta $dc00 ; select keyboard column
         lda $dc01 ; read key statuses
-;       cmp #$fb  ; right/left cursor row
-        cmp #$7f  ; up/down cursor column
-        beq updownkey ; any other key = no key
+;       cmp #$fb  ; right/left cursor
+        cmp #$7f  ; right/left cursor
+        beq somekey ; any other key = no key
         jmp nokey
-updownkey:
-        lda #$fd  ; shift key row
-        sta $dc00
-        lda $dc01
-        cmp #$7f  ; shift key column
-        beq isupkey
-isdownkey:
+somekey:
+        ;inc cnt ; opposite direction
         dec cnt
-        lda #$0
-        sta vs_max1+1
-        lda #$7
-        sta vs_min1+1
-        sta vs_min2+1
-        lda #$24
-        sta vs_nl1+1
-        sta vs_nl2+1
-        jmp vscroll
-        
-isupkey:
-        inc cnt ; opposite direction
-        lda #$7
-        sta vs_max1+1
-        lda #$0
-        sta vs_min1+1
-        sta vs_min2+1
-        sta vs_nl1+1
-        sta vs_nl2+1
-        jmp vscroll
 
-vscroll
+vscroll_down
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
         and #%11111000
@@ -347,24 +298,21 @@ vscroll
         ;sta $d016  ; horizontal
         sta $d011  ; vertical
         ldx cnt
-vs_max1 cpx #$7 
-        beq vscroll_copy
+        ;cpx #$8   ; opposite direction
+        cpx #$0
+        beq vscroll_down_copy
         jmp nocopy
 
-vscroll_copy
+vscroll_down_copy
         ; reset scroll counter
-vs_min1 ldx #$00  ; opposite direction
+        ;ldx #$00  ; opposite direction
+        ldx #7
         stx cnt
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
 
-        ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
-        lda #$00
-        bit vs_min1+1
-        beq shift_up
-
-shift_down:
-        dec viewport_y
+        ; shift the screen up, by copying from the current view + 40 (0x28) to the current view address
+        inc viewport_y
         lda swap_addr
         clc
         adc #$28
@@ -376,42 +324,21 @@ shift_down:
         lda swap_addr+1
         sta sc_d+2
         jsr screen_copy
-        jmp vs_postcopy
 
-shift_up:
-        dec viewport_y
-        lda swap_addr
-        clc
-        adc #$0
-        sta sc_b_s+1
-        lda swap_addr+1
-        adc #$3
-        sta sc_b_s+2
-        lda swap_addr
-        clc
-        adc #$28
-        sta sc_b_d+1
-        lda swap_addr+1
-        adc #$3
-        sta sc_b_d+2
-        jsr screen_copy_back
-
-vs_postcopy
         ; take the last line from the corresponding screen, which can
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
         ldx viewport_x
         lda viewport_y
-
         clc
-vs_nl1  adc #0 ; last line of the viewport (24 + 1 incremented before)
+        adc #24 ; last line of the viewport (24 + 1 incremented before)
         tay
         jsr getslot_ptr ; returns in x, a
         
         ; TODO adc viewport_x % 40 to the memcpy_from "x" parameter
         lda viewport_y
         clc
-vs_nl2  adc #0
+        adc #24
         asl
         tay
         clc
@@ -422,13 +349,14 @@ vs_nl2  adc #0
         adc screen_tbl+1, x
         sta mfh_p1+2
 
-        ; copy to line #0 (offset 0) of the framebuffer
+        ; copy to line #25 (offset 0x3c0) of the framebuffer
         lda swap_addr
         clc    
-vs_o6   adc #$c0
+        adc #$c0
         sta mfh_p0+1
         lda swap_addr+1
-vs_o7   adc #3
+        clc ; TODO we probably dont want this
+        adc #3
         sta mfh_p0+2
 
         ldx viewport_x
@@ -437,7 +365,7 @@ vs_o7   adc #3
 
         jsr memcpy_from_h
 
-wait_for_vblank
+ wait_for_vblank
         lda $d012
         cmp #$1e
         bne wait_for_vblank
@@ -446,7 +374,7 @@ wait_for_vblank
         cmp #%00000000
         bne wait_for_vblank
 
-vs_min2 ldx #0
+        ldx #7
         stx cnt
 
         lda $d011  ; vertical
@@ -456,7 +384,14 @@ vs_min2 ldx #0
         sta $d011  ; vertical
 
         jsr swap_banks
+
         jsr copy_to_swap
+
+        ; // memcopy_from_h
+        
+        ; TODO memcopy_to_h()
+        ; need to shift the entire screen up, and copy the next row
+        ; from a position defined by the viewport + the screen table
 
 nocopy
 nokey
