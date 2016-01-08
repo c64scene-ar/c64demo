@@ -86,3 +86,4 @@ for j in range(32):
 print "viewport_x: .byt 0"
 
 print "viewport_y: .byt 0"
+print "imagesize: .byt " + str(w) + "," + str(h)

@@ -37,6 +37,8 @@ loadaddr
 
 .(
 +getslot_ptr
+        lda cnt          ; TODO remove
+        lda viewport_y   ; TODO remove
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -324,7 +326,19 @@ updownkey:
         cmp #$7f  ; shift key column
         beq isupkey
 isdownkey:
+        clc
+        lda viewport_y
+        adc #25
+        cmp imagesize+1
+        bne down_limit_ok
+        jmp nokey
+
+down_limit_ok
+        lda #$0
+        cmp cnt
+        beq down_cnt_limit_cap
         dec cnt
+down_cnt_limit_cap
         lda #$0
         sta vs_max1+1
         lda #$7
@@ -340,6 +354,12 @@ isdownkey:
         jmp vscroll
         
 isupkey:
+        lda viewport_y
+        cmp #$0
+        bne up_limit_ok
+        jmp nokey
+
+up_limit_ok
         inc cnt 
         lda #$7
         sta vs_max1+1
@@ -361,6 +381,8 @@ vscroll
         sta $d011  ; vertical
         ldx cnt
 vs_max1 cpx #$7 
+        beq vscroll_copy
+vs_max2 cpx #$8
         beq vscroll_copy
         jmp nocopy
 
@@ -491,11 +513,9 @@ savey   ldy #0
 
         rti
 
-cnt .byt 0
-copiando .byt 00
+cnt .byt 7
 
 ; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk
-;swap_addr .word $3800, $3c00
 swap_addr .word $3c00, $3800
 
 #include "parser/split/info.s"

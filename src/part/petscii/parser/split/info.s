@@ -135,3 +135,4 @@ imod25times40:
   .word 920,960,0,40,80,120,160,200
 viewport_x: .byt 0
 viewport_y: .byt 50
+imagesize: .byt 120,75
