@@ -39,6 +39,9 @@ loadaddr
 +getslot_ptr
         lda cnt          ; TODO remove
         lda viewport_y   ; TODO remove
+        lda screen_copy_back ; TODO remove
+        lda swap_banks
+        lda copy_to_swap
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -87,7 +90,7 @@ setup
         ;
         lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
         and     $d018
-        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $pl3800 
+        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
                            ; Swap = $3c00 (%1111xxxx)
         sta     $d018
  
@@ -151,7 +154,7 @@ c       lda $7f00, x
 
         ; copy initial screen to swap
         jsr copy_to_swap
-        jsr swap_banks
+;        jsr swap_banks
         rts
 .)
 
@@ -357,9 +360,12 @@ isupkey:
         cmp #$ff
         bne up_limit_ok
         jmp nokey
-
 up_limit_ok
+        lda #$7
+        cmp cnt
+        beq up_cnt_limit_cap
         inc cnt 
+up_cnt_limit_cap
         lda #$7
         sta vs_max1+1
         lda #$0
@@ -372,11 +378,6 @@ up_limit_ok
         jmp vscroll
 
 vscroll
-        ; horrible patch, cap cnt
-        lda cnt
-        and #%00000111
-        sta cnt
-
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
         and #%11111000
@@ -468,7 +469,6 @@ vs_dl_l adc #$c0
 
         sta mfh_p0+1
         lda swap_addr+1
-        clc ; TODO remove
 vs_dl_h adc #3
         adc #0
         sta mfh_p0+2
@@ -479,14 +479,15 @@ vs_dl_h adc #3
 
         jsr memcpy_from_h
 
-wait_for_vblank
-        lda $d012
-        cmp #$1e
-        bne wait_for_vblank
-        lda $d011
-        and #%10000000
-        cmp #%00000000
-        bne wait_for_vblank
+;wait_for_vblank
+;        lda $d012
+;        cmp #$f5
+;        bne wait_for_vblank
+
+;        lda $d011
+;        and #%10000000
+;        cmp #%00000000
+;        bne wait_for_vblank
 
 vs_min2 ldx #0
         stx cnt
@@ -499,6 +500,7 @@ vs_min2 ldx #0
 
         jsr swap_banks
         jsr copy_to_swap
+        jsr swap_banks
 
 nocopy
 nokey
