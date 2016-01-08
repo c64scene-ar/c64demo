@@ -51,7 +51,7 @@ loadaddr
  
 setup
         ; initial irq + shift
-        lda #$1b
+        lda #$13 ; was 1b
         ora cnt
         sta $d011
         lda #$1e
@@ -303,9 +303,8 @@ interrupt
         stx savex+1
         sty savey+1
  
-        lda #$00
+        lda #0
         sta $d020
-        sta $d021
 
         ; Keyboard handling
         ;
@@ -355,7 +354,7 @@ down_cnt_limit_cap
         
 isupkey:
         lda viewport_y
-        cmp #$0
+        cmp #$ff
         bne up_limit_ok
         jmp nokey
 
@@ -373,6 +372,11 @@ up_limit_ok
         jmp vscroll
 
 vscroll
+        ; horrible patch, cap cnt
+        lda cnt
+        and #%00000111
+        sta cnt
+
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
         and #%11111000
@@ -382,8 +386,8 @@ vscroll
         ldx cnt
 vs_max1 cpx #$7 
         beq vscroll_copy
-vs_max2 cpx #$8
-        beq vscroll_copy
+;vs_max2 cpx #$8
+;        beq vscroll_copy
         jmp nocopy
 
 vscroll_copy
@@ -503,9 +507,9 @@ savea   lda #0
 savex   ldx #0
 savey   ldy #0
     
-        lda #$00
-        sta $d020
-        sta $d021
+;        lda #$00
+;        sta $d020
+;        sta $d021
 
         lsr $d019 ; ack interrupt
         cli
