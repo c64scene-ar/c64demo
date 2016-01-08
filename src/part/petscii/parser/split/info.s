@@ -134,4 +134,4 @@ imod25times40:
   .word 600,640,680,720,760,800,840,880
   .word 920,960,0,40,80,120,160,200
 viewport_x: .byt 0
-viewport_y: .byt 0
+viewport_y: .byt 50

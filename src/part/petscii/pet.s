@@ -35,7 +35,8 @@ loadaddr
 ; returns both in a and x
 ;
 
-getslot_ptr
+.(
++getslot_ptr
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -44,9 +45,9 @@ getslot_ptr
             ; to the data of the screen pointed by the viewport.
         tax
         rts
+.)
  
 setup
-
         ; initial irq + shift
         lda #$1b
         ora cnt
@@ -116,21 +117,23 @@ setup
         sty l3+2
         iny
         sty l4+2 
+
+.(
         ldx #0
-
-
-memcpy_s
-l1      lda $5800, x
++memcpy_s
+&l1     lda $5800, x
         sta $3800, x
-l2      lda $5900, x
+&l2     lda $5900, x
         sta $3900, x
-l3      lda $5a00, x
+&l3     lda $5a00, x
         sta $3a00, x
-l4      lda $5b00, x
+&l4     lda $5b00, x
         sta $3b00, x
         dex
         bne memcpy_s
- 
+.)
+
+.(
         ldx #0
 memcpy_c
 c1      lda $7c00, x
@@ -148,31 +151,35 @@ c       lda $7f00, x
         jsr copy_to_swap
         jsr swap_banks
         rts
+.)
 
+.(
 ;
 ; memcpy_from_h( dst, src, x )
 ;
 ; copies all bytes starting from addr $4242
 ; until a position such as pos % 40 == 0, this is, the
 ; end of the screen that $4242 belongs to.
-memcpy_from_h
++memcpy_from_h
         sec
         lda #39
-mfh_p2  ldx #$41
+&mfh_p2 ldx #$41
         sbc imod40, x
         tax
-mfh_loop
-mfh_p1  lda $4242, x
-mfh_p0  sta $4343, x
+&mfh_loop
+&mfh_p1 lda $4242, x
+&mfh_p0 sta $4343, x
         dex
         bpl mfh_loop
         rts
-        
+.)
+
+.(        
 ;
 ; memcpy_to_h( src, dst, x )
 ;
 ; traditional memcpy, src, dst, n.
-memcpy_to_h
++memcpy_to_h
         clc
 mth_p2  ldx #$41
 
@@ -182,7 +189,7 @@ mth_p0  sta $4343, x
         dex
         bpl mth_loop
         rts
-
+.)
 
 ;------------------------
 swap_banks
@@ -323,13 +330,17 @@ isdownkey:
         lda #$7
         sta vs_min1+1
         sta vs_min2+1
-        lda #$24
+        lda #24
         sta vs_nl1+1
         sta vs_nl2+1
+        lda #$3
+        sta vs_dl_h+1
+        lda #$c0
+        sta vs_dl_l+1
         jmp vscroll
         
 isupkey:
-        inc cnt ; opposite direction
+        inc cnt 
         lda #$7
         sta vs_max1+1
         lda #$0
@@ -337,6 +348,8 @@ isupkey:
         sta vs_min2+1
         sta vs_nl1+1
         sta vs_nl2+1
+        sta vs_dl_h+1
+        sta vs_dl_l+1
         jmp vscroll
 
 vscroll
@@ -353,18 +366,18 @@ vs_max1 cpx #$7
 
 vscroll_copy
         ; reset scroll counter
-vs_min1 ldx #$00  ; opposite direction
+vs_min1 ldx #$00  ; direction, 00 up, 07 down
         stx cnt
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
 
         ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
-        lda #$00
-        bit vs_min1+1
-        beq shift_up
+        lda #$0
+        cmp vs_min1+1
+        beq move_cam_up
 
-shift_down:
-        dec viewport_y
+move_cam_down:
+        inc viewport_y
         lda swap_addr
         clc
         adc #$28
@@ -378,7 +391,7 @@ shift_down:
         jsr screen_copy
         jmp vs_postcopy
 
-shift_up:
+move_cam_up:
         dec viewport_y
         lda swap_addr
         clc
@@ -402,7 +415,6 @@ vs_postcopy
         ; the offset needed.
         ldx viewport_x
         lda viewport_y
-
         clc
 vs_nl1  adc #0 ; last line of the viewport (24 + 1 incremented before)
         tay
@@ -422,13 +434,17 @@ vs_nl2  adc #0
         adc screen_tbl+1, x
         sta mfh_p1+2
 
-        ; copy to line #0 (offset 0) of the framebuffer
+        ; copy to the corresponding line (first/last) of the framebuffer
         lda swap_addr
         clc    
-vs_o6   adc #$c0
+vs_dl_l adc #$c0
+        adc #0
+
         sta mfh_p0+1
         lda swap_addr+1
-vs_o7   adc #3
+        clc ; TODO remove
+vs_dl_h adc #3
+        adc #0
         sta mfh_p0+2
 
         ldx viewport_x
@@ -475,7 +491,7 @@ savey   ldy #0
 
         rti
 
-cnt .byt 7
+cnt .byt 0
 copiando .byt 00
 
 ; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk
