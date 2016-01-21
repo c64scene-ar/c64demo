@@ -1,5 +1,4 @@
         ; efo header
-
         .byt    "EFO2"  ; fileformat magic
         .word   0       ; prepare routine
         .word   setup   ; setup routine
@@ -18,7 +17,7 @@
         ;.byt   "M",<play,>play ; install music playroutine
 
         .byt    "S"     ; i/o safe
-        .byt    0       ; end of tags
+        .byt    0       ; end of tags hola
 
         .word   loadaddr
         * = $2000
@@ -37,11 +36,7 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda cnt          ; TODO remove
-        lda viewport_y   ; TODO remove
-        lda screen_copy_back ; TODO remove
-        lda swap_banks
-        lda copy_to_swap
+        lda memcpy_to_h
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -159,6 +154,8 @@ c       lda $7f00, x
 .)
 
 .(
+
+;=====================================================================================================================
 ;
 ; memcpy_from_h( dst, src, x )
 ;
@@ -168,12 +165,12 @@ c       lda $7f00, x
 +memcpy_from_h
         sec
         lda #39
-&mfh_p2 ldx #$41
+&mfh_i  ldx #$41
         sbc imod40, x
         tax
-&mfh_loop
-&mfh_p1 lda $4242, x
-&mfh_p0 sta $4343, x
+mfh_loop
+&mfh_s lda $4242, x
+&mfh_d sta $4343, x
         dex
         bpl mfh_loop
         rts
@@ -186,13 +183,13 @@ c       lda $7f00, x
 ; traditional memcpy, src, dst, n.
 +memcpy_to_h
         clc
-mth_p2  ldx #$41
+&mth_n  ldx #$41 
 
 mth_loop
-mth_p1  lda $4242, x
-mth_p0  sta $4343, x
+&mth_s  lda $4242, x
+&mth_d  sta $4343, x
         dex
-        bpl mth_loop
+        bne mth_loop
         rts
 .)
 
@@ -298,8 +295,8 @@ screen_copy_b_done
         sta sc_b_d+2
 
         rts
-;------------------------
 
+;=====================================================================================================================
 interrupt
         sei
         sta savea+1
@@ -349,10 +346,14 @@ down_cnt_limit_cap
         lda #24
         sta vs_nl1+1
         sta vs_nl2+1
+        sta vsr_nl1+1
+        sta vsr_nl2+1
         lda #$3
         sta vs_dl_h+1
+        sta vsr_d_h+1
         lda #$c0
         sta vs_dl_l+1
+        sta vsr_d_l+1
         jmp vscroll
         
 isupkey:
@@ -375,8 +376,13 @@ up_cnt_limit_cap
         sta vs_nl2+1
         sta vs_dl_h+1
         sta vs_dl_l+1
+        sta vsr_nl1+1
+        sta vsr_nl2+1
+        sta vsr_d_l+1
+        sta vsr_d_h+1
         jmp vscroll
 
+;=====================================================================================================================
 vscroll
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
@@ -396,8 +402,6 @@ vscroll_copy
 vs_min1 ldx #$00  ; direction, 00 up, 07 down
         stx cnt
 
-        ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + 25 + 1), viewport_x % 40 )
-
         ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
         lda #$0
         cmp vs_min1+1
@@ -416,8 +420,9 @@ move_cam_down:
         lda swap_addr+1
         sta sc_d+2
         jsr screen_copy
-        jmp vs_postcopy
+        jmp vs_copy_from_left_screen
 
+        ; shift the screen up, by copying from the current view to the current view address + 0x328
 move_cam_up:
         dec viewport_y
         lda swap_addr
@@ -436,13 +441,18 @@ move_cam_up:
         sta sc_b_d+2
         jsr screen_copy_back
 
-vs_postcopy
+
+        ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
+vs_copy_from_left_screen
         ; take the last line from the corresponding screen, which can
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
         ldx viewport_x
         lda viewport_y
         clc
+        
+        ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
+
 vs_nl1  adc #0 ; last line of the viewport (24 + 1 incremented before)
         tay
         jsr getslot_ptr ; returns in x, a
@@ -453,42 +463,123 @@ vs_nl1  adc #0 ; last line of the viewport (24 + 1 incremented before)
 vs_nl2  adc #0
         asl
         tay
+
+        ; calculate source base address (left screen)
         clc
         lda imod25times40, y
         adc screen_tbl, x
-        sta mfh_p1+1
+        sta mfh_s+1
         lda imod25times40+1, y
         adc screen_tbl+1, x
-        sta mfh_p1+2
+        sta mfh_s+2
+
+        ; calculate source offset (left screen)
+        clc
+        ldx viewport_x
+        lda imod40, x
+        adc mfh_s+1
+        sta mfh_s+1
+        lda #0
+        adc mfh_s+2
 
         ; copy to the corresponding line (first/last) of the framebuffer
+        ; dl stands for dest line, which is actually an offet that refers
+        ; to the beggining of the screen line.
         lda swap_addr
         clc    
 vs_dl_l adc #$c0
-        adc #0
+        adc #0      ; TODO review this
 
-        sta mfh_p0+1
+        sta mfh_d+1
         lda swap_addr+1
 vs_dl_h adc #3
-        adc #0
-        sta mfh_p0+2
+        adc #0      ; TODO and this
+        sta mfh_d+2
 
         ldx viewport_x
         lda imod40, x
-        sta mfh_p2+1   ; internal offset, copy_from viewport_x % 40 (until the end of the screen line)
+        sta mfh_i+1   ; internal offset, copy_from viewport_x % 40 (until the end of the screen line)
 
         jsr memcpy_from_h
 
-;wait_for_vblank
-;        lda $d012
-;        cmp #$f5
-;        bne wait_for_vblank
 
-;        lda $d011
-;        and #%10000000
-;        cmp #%00000000
-;        bne wait_for_vblank
+        ; memcopy_to_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
+vs_copy_from_right_screen
+        ; take the last line from the corresponding screen, which can
+        ; be found by getting the current screen slot and then applying
+        ; the offset needed.
+        ldx viewport_x
+        
+        lda imod40, x ; patch for coordinates aligned to 40, where theres no right screen.
+        cmp #0
+        beq vs_min2
 
+        txa
+        clc
+        adc #40
+        tax
+        lda viewport_y
+        clc
+        
+        ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
+
+vsr_nl1 adc #0 ; last line (or first) of the viewport (if last, 24 + 1 incremented before)
+        tay
+        jsr getslot_ptr ; returns in x, a
+        
+        ; offset vertically
+        lda viewport_y
+        clc
+vsr_nl2 adc #0
+        asl ; this is because y is going to be used as an index of imod25times40, 
+            ; which is a word list (not bytes), so as every element takes 2 bytes,
+            ;I need to multiply this index.
+        tay
+
+        ; calculate source base address (right screen)
+        clc
+        lda imod25times40, y
+        adc screen_tbl, x
+        sta mth_s+1
+        lda imod25times40+1, y
+        adc screen_tbl+1, x
+        sta mth_s+2
+
+        ; here there's no offset, because the copy_to always starts from the
+        ; beggining of the line, as it is the right screen. 
+
+        ; copy to the corresponding line (first/last) of the framebuffer
+        ; dl stands for dest line, which is actually an offet that refers
+        ; to the beggining of the screen line.
+        lda swap_addr
+        clc    
+vsr_d_l adc #$c0
+        adc #0      ; TODO review this
+
+        sta mth_d+1
+        lda swap_addr+1
+vsr_d_h adc #3
+        adc #0      ; TODO and this
+        sta mth_d+2
+
+        ; adjust dest offset, for the right screen
+        ldx viewport_x
+        lda #40
+        sbc imod40, x
+        clc
+        adc mth_d+1
+        sta mth_d+1
+        lda mth_d+2
+        adc #0
+        sta mth_d+2
+
+        ldx viewport_x
+        lda imod40, x
+        sta mth_n+1   ; internal offset, copy_to is always from 0.
+
+        jsr memcpy_to_h
+ 
+;=====================================================================================================================
 vs_min2 ldx #0
         stx cnt
 
@@ -496,12 +587,13 @@ vs_min2 ldx #0
         and #%11111000
         ora cnt
         ;sta $d016  ; horizontal
-        sta $d011  ; vertical
+        sta $d011  ; vertical 
 
         jsr swap_banks
         jsr copy_to_swap
         jsr swap_banks
 
+;=====================================================================================================================
 nocopy
 nokey
 
