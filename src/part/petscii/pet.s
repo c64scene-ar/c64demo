@@ -36,7 +36,7 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda memcpy_to_h
+        lda debughere
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -169,8 +169,8 @@ c       lda $7f00, x
         sbc imod40, x
         tax
 mfh_loop
-&mfh_s lda $4242, x
-&mfh_d sta $4343, x
+&mfh_s  lda $4242, x
+&mfh_d  sta $4343, x
         dex
         bpl mfh_loop
         rts
@@ -186,9 +186,10 @@ mfh_loop
 &mth_n  ldx #$41 
 
 mth_loop
+        dex
 &mth_s  lda $4242, x
 &mth_d  sta $4343, x
-        dex
+        cpx #0
         bne mth_loop
         rts
 .)
@@ -481,6 +482,7 @@ vs_nl2  adc #0
         sta mfh_s+1
         lda #0
         adc mfh_s+2
+        sta mfh_s+2
 
         ; copy to the corresponding line (first/last) of the framebuffer
         ; dl stands for dest line, which is actually an offet that refers
@@ -488,18 +490,19 @@ vs_nl2  adc #0
         lda swap_addr
         clc    
 vs_dl_l adc #$c0
-        adc #0      ; TODO review this
+        ;adc #0      ; TODO review this
 
         sta mfh_d+1
         lda swap_addr+1
 vs_dl_h adc #3
-        adc #0      ; TODO and this
+        ;adc #0      ; TODO and this
         sta mfh_d+2
 
         ldx viewport_x
         lda imod40, x
         sta mfh_i+1   ; internal offset, copy_from viewport_x % 40 (until the end of the screen line)
 
+debughere
         jsr memcpy_from_h
 
 
@@ -564,7 +567,7 @@ vsr_d_h adc #3
 
         ; adjust dest offset, for the right screen
         ldx viewport_x
-        lda #40
+        lda #41       ; TODO review, this works, but wtf?
         sbc imod40, x
         clc
         adc mth_d+1
