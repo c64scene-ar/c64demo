@@ -1,0 +1,118 @@
+//-------------------------------------------------------------
+// 010 Editor v2.0 Binary Template
+//
+// File:     ucafiles.bt
+// Author:   acid/PVM (http://csdb.dk/group/?id=8337)
+// Revision: 1.0
+// Purpose:  Defines a template for parsing UCA files (C64 AAE)
+//-------------------------------------------------------------
+
+struct UCAFILE {
+    struct HEADER {
+        SetBackColor(cLtBlue);
+        char magic[23];
+
+        // Unknown - the parser should raise a flag if this is != "\x01\x00"
+        SetBackColor(cLtRed);
+        char unknown1[2];
+        Assert(unknown1 == "\x01\x00", "\nUnknown1 has a different value! w00t!");
+        
+        SetBackColor(cLtBlue);
+        // Document properties
+        unsigned int width;
+        unsigned int height;    
+        byte border_color;
+        byte bg_color;
+        
+        // "Entry" properties :)
+        SetBackColor(cLtGreen);
+        unsigned int author_len;
+        char author_name[author_len];
+        unsigned int title_len;
+        char petscii_title[title_len];
+        
+        SetBackColor(cLtYellow);
+        // Metadata
+        unsigned int ts_len;
+        char timestamp[ts_len];
+
+        // Unknown - the parser should raise a flag if this is != "\x00\x00\x00\x00"
+        SetBackColor(cLtRed);
+        unsigned int unknown2;
+        Assert(unknown2 == 0, "Unknown2 has a different value! w00t!");
+
+        } header <bgcolor=cLtGray, optimize=false>;
+
+        // Number of frames to read
+        SetBackColor(cLtGreen);
+        unsigned int num_frames;
+        struct FRAME {
+
+            // Number of layers this frame contains
+            SetBackColor(cLtAqua);
+            int num_layers;
+            
+            struct LAYER {
+                SetBackColor(cLtGreen);
+                // Layer properties
+                byte is_visible;
+                byte is_locked;
+
+                // Layer name
+                unsigned int name_len;
+                char layer_name[name_len];
+
+                // Weird that this is here. Every layer for
+                // the frame contain the frame's time (for animations).
+                unsigned int frame_time;
+                
+                // This represents the parser of the image data,
+                // which is already implemented in python. We obviously
+                // do not generate the screen/color ram matrices here,
+                // so the algorithm is here just to get the length of
+                // the "data" member. You can ignore this :).
+                local unsigned int x = 0;
+                local unsigned int y = 0;
+
+                local byte last_byt = 0;
+                local byte last_is_char = 0;
+                local byte first_pass = 1;
+                local byte byt;
+                local byte is_char;
+                local unsigned int data_size;
+
+                local unsigned int orig_pos = FTell();
+
+                while (!FEof()) {
+                    byt = ReadByte();
+                    is_char = 0;
+                    if (byt < 0x10) {
+                        if ((first_pass != 1) && (last_byt < 0x10) && (last_is_char == 0)) {
+                            is_char = 1;
+                        }
+                    } else {
+                        is_char = 1;
+                    }
+                    if (is_char == 1) {
+                        x += 1;
+                        if (x == file.header.width) {
+                            y += 1;
+                            x = 0;
+                        }
+                        if (y == file.header.height) {
+                            break;
+                        }
+                    }
+                    FSeek(FTell() + 1);
+                    data_size += 1;
+                    first_pass = 0;
+                    last_byt = byt;
+                    last_is_char = is_char;
+                }
+                FSeek( orig_pos );
+                SetBackColor(cLtAqua);
+                byte data[data_size+1];
+
+            } layers[num_layers] <optimize=false >;
+        } frames[num_frames] <optimize=false>;
+} file;
