@@ -23,6 +23,8 @@
         * = $2000
 loadaddr
 
+#include "parser/split/info.s"
+#include "swap.s"
 
 ;
 ; getslot_ptr( x, y )
@@ -50,7 +52,7 @@ loadaddr
 setup
         ; initial irq + shift
         lda #$13 ; was 1b
-        ora cnt
+        ora vcnt
         sta $d011
         lda #$1e
         sta $d012
@@ -194,58 +196,6 @@ mth_loop
         rts
 .)
 
-;------------------------
-swap_banks
-        ldy swap_addr+2 
-        ldx swap_addr+0 
-        stx swap_addr+2 
-        sty swap_addr+0 
-        ldy swap_addr+3
-        ldx swap_addr+1
-        stx swap_addr+3
-        sty swap_addr+1
-        cpy #$3c        ; WARNING hardcoded, depends on using $3cxx for one bank
-        bne swap_to_two
-swap_to_one
-        ;
-        ; Screen configuration
-        ;
-        ; http://codebase64.org/doku.php?id=base:vicii_memory_organizing
-        ;
-        ; Active frame buffer at $3800, display at $3c00
-        ;
-        lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
-        and     $d018
-        ora     #%11100000 ; $D018 = %1110xxxx -> screenmem is at $3800 
-        sta     $d018
-        jmp swap_finish
-swap_to_two
-        ;
-        ; Active frame buffer at $3c00, display at $3800
-        ;
-        lda     #%00001111 ; Char ROM + Unused bit, leave them alone 
-        and     $d018
-
-        ora     #%11110000 ; $D018 = %1111xxxx -> screenmem is at $3c00 
-        sta     $d018
-swap_finish
-        rts
-
-; copy current screen to swap
-copy_to_swap
-        ; the second element is the currently selected bank
-        ldx swap_addr+2
-        stx sc_s+1
-        ldx swap_addr+3
-        stx sc_s+2
-
-        ; the first one is the frame buffer
-        ldx swap_addr+0
-        stx sc_d+1
-        ldx swap_addr+1
-        stx sc_d+2
-        jsr screen_copy
-        rts
 
 ;------------------------
 screen_copy
@@ -312,12 +262,24 @@ interrupt
         ; http://codebase64.org/doku.php?id=base:reading_the_keyboard
         ; http://sta.c64.org/cbm64kbdlay.html
         ;
-        lda #$fe
-        sta $dc00 ; up/down cursor row
+        ; WASD movement.
+        ;
+        lda #$fd
+        sta $dc00 ; up/down (W/S). it also gets the status of A.
         lda $dc01 ; read key statuses
 ;       cmp #$fb  ; right/left cursor row
-        cmp #$7f  ; up/down cursor column
-        beq updownkey ; any other key = no key
+        cmp #$fd  ; fd, fd = W
+        beq isupkey
+        cmp #$df  ; fd, df = S
+        beq isdownkey
+        cmp #$fb  ; fd, fb = A
+        beq isleftkey
+        lda #$fb
+        sta $dc00
+        lda $dc01
+        cmp #$fb  ; fb, fb = D
+        beq isrightkey
+        ;beq updownkey ; any other key = no key
         jmp nokey
 updownkey:
         lda #$fd  ; shift key row
@@ -325,6 +287,8 @@ updownkey:
         lda $dc01
         cmp #$7f  ; shift key column
         beq isupkey
+isleftkey:
+isrightkey:
 isdownkey:
         clc
         lda viewport_y
@@ -335,9 +299,9 @@ isdownkey:
 
 down_limit_ok
         lda #$0
-        cmp cnt
+        cmp vcnt
         beq down_cnt_limit_cap
-        dec cnt
+        dec vcnt
 down_cnt_limit_cap
         lda #$0
         sta vs_max1+1
@@ -364,9 +328,9 @@ isupkey:
         jmp nokey
 up_limit_ok
         lda #$7
-        cmp cnt
+        cmp vcnt
         beq up_cnt_limit_cap
-        inc cnt 
+        inc vcnt 
 up_cnt_limit_cap
         lda #$7
         sta vs_max1+1
@@ -388,20 +352,18 @@ vscroll
         ;lda $d016 ; horizontal
         lda $d011  ; vertical
         and #%11111000
-        ora cnt
+        ora vcnt
         ;sta $d016  ; horizontal
         sta $d011  ; vertical
-        ldx cnt
+        ldx vcnt
 vs_max1 cpx #$7 
         beq vscroll_copy
-;vs_max2 cpx #$8
-;        beq vscroll_copy
         jmp nocopy
 
 vscroll_copy
         ; reset scroll counter
 vs_min1 ldx #$00  ; direction, 00 up, 07 down
-        stx cnt
+        stx vcnt
 
         ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
         lda #$0
@@ -441,7 +403,6 @@ move_cam_up:
         adc #$3
         sta sc_b_d+2
         jsr screen_copy_back
-
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 vs_copy_from_left_screen
@@ -584,12 +545,83 @@ vsr_d_h adc #3
  
 ;=====================================================================================================================
 vs_min2 ldx #0
-        stx cnt
+        stx vcnt
 
         lda $d011  ; vertical
         and #%11111000
-        ora cnt
+        ora vcnt
         ;sta $d016  ; horizontal
+        sta $d011  ; vertical 
+
+        jsr swap_banks
+        jsr copy_to_swap
+        jsr swap_banks
+        jmp done_scrolling
+;=====================================================================================================================
+hscroll
+        lda $d016 ; horizontal
+        ;lda $d011  ; vertical
+        and #%11111000
+        ora hcnt
+        sta $d016  ; horizontal
+        ;sta $d011  ; vertical
+        ldx hcnt
+hs_max1 cpx #$7 
+        beq hscroll_copy
+        jmp nocopy
+
+hscroll_copy
+        ; reset scroll counter
+hs_min1 ldx #$00  ; direction, 00 up, 07 down
+        stx hcnt
+
+        ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
+        lda #$0
+        cmp hs_min1+1
+        beq move_cam_left
+
+move_cam_right:
+        inc viewport_x
+        lda swap_addr
+        clc
+        adc #$1
+        sta sc_s+1
+        lda swap_addr+1
+        sta sc_s+2
+        lda swap_addr
+        sta sc_d+1
+        lda swap_addr+1
+        sta sc_d+2
+        jsr screen_copy
+        jmp hs_min2
+
+        ; shift the screen up, by copying from the current view to the current view address + 0x328
+move_cam_left:
+        dec viewport_x
+        lda swap_addr
+        clc
+        adc #$0
+        sta sc_b_s+1
+        lda swap_addr+1
+        adc #$3
+        sta sc_b_s+2
+        lda swap_addr
+        clc
+        adc #$01
+        sta sc_b_d+1
+        lda swap_addr+1
+        adc #$3
+        sta sc_b_d+2
+        jsr screen_copy_back
+ 
+;=====================================================================================================================
+hs_min2 ldx #0
+        stx hcnt
+
+        ;lda $d011  ; vertical
+        and #%11111000
+        ora hcnt
+        sta $d016  ; horizontal
         sta $d011  ; vertical 
 
         jsr swap_banks
@@ -597,6 +629,9 @@ vs_min2 ldx #0
         jsr swap_banks
 
 ;=====================================================================================================================
+
+
+done_scrolling
 nocopy
 nokey
 
@@ -614,9 +649,7 @@ savey   ldy #0
 
         rti
 
-cnt .byt 7
+vcnt .byt 7
+hcnt .byt 7
 
-; TODO send to zero page vectors (https://www.c64-wiki.com/index.php/Indirect-indexed_addressing), maybe.. idk
-swap_addr .word $3c00, $3800
 
-#include "parser/split/info.s"

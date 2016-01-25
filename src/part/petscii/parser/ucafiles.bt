@@ -95,11 +95,11 @@ struct UCAFILE {
                     }
                     if (is_char == 1) {
                         x += 1;
-                        if (x == file.header.width) {
+                        if (x == ucafile.header.width) {
                             y += 1;
                             x = 0;
                         }
-                        if (y == file.header.height) {
+                        if (y == ucafile.header.height) {
                             break;
                         }
                     }
@@ -115,4 +115,4 @@ struct UCAFILE {
 
             } layers[num_layers] <optimize=false >;
         } frames[num_frames] <optimize=false>;
-} file;
+} ucafile;
