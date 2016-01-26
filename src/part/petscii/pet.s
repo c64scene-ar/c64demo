@@ -36,6 +36,7 @@ loadaddr
 .(
 +getslot_ptr
         lda hscroll_copy
+        lda move_cam_right
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -198,6 +199,41 @@ mth_loop
         bne mth_loop
         rts
 .)
+
+; copy_column( dest, source, num_lines )
+.(
++copy_column
+
+&cc_n   ldx $88
+cc_loop
+        ; This time the copy is not indexed, the address
+        ; changed by the self-modifying code below.
+&cc_s   lda $4242 
+&cc_d   sta $4343 
+
+        clc
+        lda cc_s+1
+        adc #40
+        sta cc_s+1
+        lda cc_s+2
+        adc #0
+        sta cc_s+2
+
+        clc
+        lda cc_d+1
+        adc #40
+        sta cc_d+1
+        lda cc_d+2
+        adc #0
+        sta cc_d+2
+
+        dex
+        bne cc_loop
+        rts
+.)
+
+
+       
 
 
 ;------------------------
@@ -454,7 +490,6 @@ vs_nl1  adc #0 ; last line of the viewport (24 + 1 incremented before)
         tay
         jsr getslot_ptr ; returns in x, a
         
-        ; TODO adc viewport_x % 40 to the memcpy_from "x" parameter
         lda viewport_y
         clc
 vs_nl2  adc #0
@@ -591,6 +626,7 @@ vs_min2 ldx #0
         jsr copy_to_swap
         jsr swap_banks
         jmp done_scrolling
+
 ;=====================================================================================================================
 hscroll
         lda $d016 ; horizontal
@@ -647,6 +683,144 @@ move_cam_left:
         sta sc_b_d+2
         jsr screen_copy_back
  
+
+        ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
+hs_copy_from_top_screen
+        ; take the last line from the corresponding screen, which can
+        ; be found by getting the current screen slot and then applying
+        ; the offset needed.
+        ldx viewport_x
+        lda viewport_y
+        clc
+        
+        ; vs_nl1/2 (new line) are either #0 or #39, depending on the direction
+
+hs_nl1  adc #0 ; last line of the viewport (39 + 1 incremented before)
+        tay
+        jsr getslot_ptr ; returns in x, a
+        
+        lda viewport_y
+        clc
+hs_nl2  adc #0
+        asl
+        tay
+
+        ; calculate source base address for the column (top screen)
+        clc
+        lda imod25times40, y
+        adc screen_tbl, x
+        sta cc_s+1
+        lda imod25times40+1, y
+        adc screen_tbl+1, x
+        sta cc_s+2
+
+        ; calculate source offset (top screen)
+        clc
+        ldx viewport_x
+        lda imod40, x
+        adc cc_s+1
+        sta cc_s+1
+        lda #0
+        adc cc_s+2
+        sta cc_s+2
+
+        ; copy to the corresponding line (first/last) of the framebuffer
+        ; dl stands for dest line, which is actually an offet that refers
+        ; to the beggining of the screen line.
+        clc    
+        lda swap_addr
+hs_dc   adc #0
+        sta cc_d+1
+
+        lda swap_addr+1
+        adc #0
+        sta cc_d+2
+
+        sec
+        lda #25
+        ldy viewport_y
+        sbc imod25, y
+        sta cc_n+1 
+
+        jsr copy_column
+
+
+hs_copy_from_bottom_screen
+        ; take the last line from the corresponding screen, which can
+        ; be found by getting the current screen slot and then applying
+        ; the offset needed.
+        ldx viewport_x
+        
+        lda imod40, x ; patch for coordinates.. TODO review 
+        cmp #0
+        beq hs_min2
+
+        txa
+        clc
+        adc #40
+        tax
+        lda viewport_y
+        clc
+        
+        ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
+
+hsr_nl1 adc #0 ; last line (or first) of the viewport (if last, 24 + 1 incremented before)
+        tay
+        jsr getslot_ptr ; returns in x, a
+        
+        ; offset vertically
+        lda viewport_y
+        clc
+hsr_nl2 adc #0
+        asl ; this is because y is going to be used as an index of imod25times40, 
+            ; which is a word list (not bytes), so as every element takes 2 bytes,
+            ;I need to multiply this index.
+        tay
+
+        ; calculate source base address (right screen)
+        clc
+        lda imod25times40, y
+        adc screen_tbl, x
+        sta mth_s+1
+        lda imod25times40+1, y
+        adc screen_tbl+1, x
+        sta mth_s+2
+
+        ; here there's no offset, because the copy_to always starts from the
+        ; beggining of the line, as it is the right screen. 
+
+        ; copy to the corresponding line (first/last) of the framebuffer
+        ; dl stands for dest line, which is actually an offet that refers
+        ; to the beggining of the screen line.
+        lda swap_addr
+        clc    
+hsr_d_l adc #$c0
+        adc #0      ; TODO review this
+
+        sta mth_d+1
+        lda swap_addr+1
+hsr_d_h adc #3
+        adc #0      ; TODO and this
+        sta mth_d+2
+
+        ; adjust dest offset, for the right screen
+        ldx viewport_x
+        lda #41       ; TODO review, this works, but wtf?
+        sbc imod40, x
+        clc
+        adc mth_d+1
+        sta mth_d+1
+        lda mth_d+2
+        adc #0
+        sta mth_d+2
+
+        ldx viewport_x
+        lda imod40, x
+        sta mth_n+1   ; internal offset, copy_to is always from 0.
+
+        jsr memcpy_to_h
+ 
+
 ;=====================================================================================================================
 hs_min2 ldx #0
         stx hcnt
