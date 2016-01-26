@@ -23,9 +23,6 @@
         * = $2000
 loadaddr
 
-#include "parser/split/info.s"
-#include "swap.s"
-
 ;
 ; getslot_ptr( x, y )
 ;
@@ -38,7 +35,7 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda debughere
+        lda hscroll_copy
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -50,11 +47,17 @@ loadaddr
 .)
  
 setup
-        ; initial irq + shift
+        ; initial screen shift
         lda #$13 ; was 1b
         ora vcnt
         sta $d011
-        lda #$1e
+
+        lda $d016
+        and #%11110000
+        ora vcnt
+        sta $d016
+
+        lda #$1e ; IRQ setup
         sta $d012
  
         ;lda     #0
@@ -241,10 +244,6 @@ sc_b_d  sta $7777,x
         jmp screen_copy_b_loop
 
 screen_copy_b_done
-        lda #$38
-        sta sc_b_s+2
-        sta sc_b_d+2
-
         rts
 
 ;=====================================================================================================================
@@ -266,20 +265,22 @@ interrupt
         ;
         lda #$fd
         sta $dc00 ; up/down (W/S). it also gets the status of A.
-        lda $dc01 ; read key statuses
-;       cmp #$fb  ; right/left cursor row
+        lda $dc01 ; read keyboard status
         cmp #$fd  ; fd, fd = W
         beq isupkey
         cmp #$df  ; fd, df = S
         beq isdownkey
         cmp #$fb  ; fd, fb = A
-        beq isleftkey
+        bne checkrightkey ; just so I can place a far jmp in the next instruction
+        jmp isleftkey
+checkrightkey
         lda #$fb
         sta $dc00
         lda $dc01
         cmp #$fb  ; fb, fb = D
-        beq isrightkey
-        ;beq updownkey ; any other key = no key
+        bne nokey_trampoline
+        jmp isrightkey
+nokey_trampoline
         jmp nokey
 updownkey:
         lda #$fd  ; shift key row
@@ -287,8 +288,6 @@ updownkey:
         lda $dc01
         cmp #$7f  ; shift key column
         beq isupkey
-isleftkey:
-isrightkey:
 isdownkey:
         clc
         lda viewport_y
@@ -296,7 +295,6 @@ isdownkey:
         cmp imagesize+1
         bne down_limit_ok
         jmp nokey
-
 down_limit_ok
         lda #$0
         cmp vcnt
@@ -320,7 +318,6 @@ down_cnt_limit_cap
         sta vs_dl_l+1
         sta vsr_d_l+1
         jmp vscroll
-        
 isupkey:
         lda viewport_y
         cmp #$ff
@@ -346,6 +343,44 @@ up_cnt_limit_cap
         sta vsr_d_l+1
         sta vsr_d_h+1
         jmp vscroll
+
+isleftkey:
+        lda viewport_x
+        cmp #$ff
+        bne left_limit_ok
+        jmp nokey
+left_limit_ok
+        lda #7
+        cmp hcnt
+        beq left_cnt_limit_cap
+        inc hcnt
+left_cnt_limit_cap
+        lda #$7
+        sta hs_max1+1
+        lda #$0
+        sta hs_min1+1
+        sta hs_min2+1
+        jmp hscroll
+isrightkey:
+        clc
+        lda viewport_x
+        adc #40
+        cmp imagesize+0
+        bne right_limit_ok
+        jmp nokey
+right_limit_ok
+        lda #$0
+        cmp hcnt
+        beq right_limit_cap
+        dec hcnt
+right_limit_cap
+        lda #$0
+        sta hs_max1+1
+        lda #$7
+        sta hs_min1+1
+        sta hs_min2+1
+        jmp hscroll
+
 
 ;=====================================================================================================================
 vscroll
@@ -463,7 +498,6 @@ vs_dl_h adc #3
         lda imod40, x
         sta mfh_i+1   ; internal offset, copy_from viewport_x % 40 (until the end of the screen line)
 
-debughere
         jsr memcpy_from_h
 
 
@@ -560,11 +594,9 @@ vs_min2 ldx #0
 ;=====================================================================================================================
 hscroll
         lda $d016 ; horizontal
-        ;lda $d011  ; vertical
         and #%11111000
         ora hcnt
         sta $d016  ; horizontal
-        ;sta $d011  ; vertical
         ldx hcnt
 hs_max1 cpx #$7 
         beq hscroll_copy
@@ -572,18 +604,19 @@ hs_max1 cpx #$7
 
 hscroll_copy
         ; reset scroll counter
-hs_min1 ldx #$00  ; direction, 00 up, 07 down
+hs_min1 ldx #$00  ; direction, 00 left, 07 right
         stx hcnt
 
-        ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
         lda #$0
         cmp hs_min1+1
         beq move_cam_left
 
 move_cam_right:
         inc viewport_x
-        lda swap_addr
+
+        ; Screen copy, source is swap_addr + 1
         clc
+        lda swap_addr
         adc #$1
         sta sc_s+1
         lda swap_addr+1
@@ -595,7 +628,7 @@ move_cam_right:
         jsr screen_copy
         jmp hs_min2
 
-        ; shift the screen up, by copying from the current view to the current view address + 0x328
+        ; shift the screen left, by copying from the current view to the current view address + 1
 move_cam_left:
         dec viewport_x
         lda swap_addr
@@ -607,7 +640,7 @@ move_cam_left:
         sta sc_b_s+2
         lda swap_addr
         clc
-        adc #$01
+        adc #$1
         sta sc_b_d+1
         lda swap_addr+1
         adc #$3
@@ -618,11 +651,10 @@ move_cam_left:
 hs_min2 ldx #0
         stx hcnt
 
-        ;lda $d011  ; vertical
+        lda $d016  ; horizontal
         and #%11111000
         ora hcnt
         sta $d016  ; horizontal
-        sta $d011  ; vertical 
 
         jsr swap_banks
         jsr copy_to_swap
@@ -651,5 +683,8 @@ savey   ldy #0
 
 vcnt .byt 7
 hcnt .byt 7
+
+#include "parser/split/info.s"
+#include "swap.s"
 
 
