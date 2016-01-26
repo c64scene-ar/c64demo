@@ -35,6 +35,7 @@ loadaddr
 
 .(
 +getslot_ptr
+        lda copy_column
         lda hscroll_copy
         lda move_cam_right
         clc
@@ -204,7 +205,7 @@ mth_loop
 .(
 +copy_column
 
-&cc_n   ldx $88
+&cc_n   ldx #$88
 cc_loop
         ; This time the copy is not indexed, the address
         ; changed by the self-modifying code below.
@@ -231,9 +232,6 @@ cc_loop
         bne cc_loop
         rts
 .)
-
-
-       
 
 
 ;------------------------
@@ -318,12 +316,6 @@ checkrightkey
         jmp isrightkey
 nokey_trampoline
         jmp nokey
-updownkey:
-        lda #$fd  ; shift key row
-        sta $dc00
-        lda $dc01
-        cmp #$7f  ; shift key column
-        beq isupkey
 isdownkey:
         clc
         lda viewport_y
@@ -356,7 +348,7 @@ down_cnt_limit_cap
         jmp vscroll
 isupkey:
         lda viewport_y
-        cmp #$ff
+        cmp #$0
         bne up_limit_ok
         jmp nokey
 up_limit_ok
@@ -382,7 +374,7 @@ up_cnt_limit_cap
 
 isleftkey:
         lda viewport_x
-        cmp #$ff
+        cmp #$0
         bne left_limit_ok
         jmp nokey
 left_limit_ok
@@ -737,7 +729,7 @@ hs_dc   adc #0
         sta cc_d+2
 
         sec
-        lda #25
+        lda #25    ; TODO maybe 24
         ldy viewport_y
         sbc imod25, y
         sta cc_n+1 
@@ -749,76 +741,57 @@ hs_copy_from_bottom_screen
         ; take the last line from the corresponding screen, which can
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
-        ldx viewport_x
+        ldy viewport_y
         
-        lda imod40, x ; patch for coordinates.. TODO review 
+        lda imod25, y
         cmp #0
         beq hs_min2
 
-        txa
+        tya
         clc
-        adc #40
-        tax
-        lda viewport_y
-        clc
-        
-        ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
-
-hsr_nl1 adc #0 ; last line (or first) of the viewport (if last, 24 + 1 incremented before)
+hsr_nc1 adc #24 ; TODO maybe 24
         tay
+        ldx viewport_x
+        clc
+hsr_nc2 adc #0  ; 0 for left, 40 for right
         jsr getslot_ptr ; returns in x, a
         
-        ; offset vertically
+        ; calculate source base address (right screen)
+        ldy viewport_x
+        clc
+        lda imod40, y
+        adc screen_tbl, x
+        sta cc_s+1
+        lda #0
+        adc cc_s+2
+        sta cc_s+2
+
         lda viewport_y
         clc
-hsr_nl2 adc #0
-        asl ; this is because y is going to be used as an index of imod25times40, 
-            ; which is a word list (not bytes), so as every element takes 2 bytes,
-            ;I need to multiply this index.
+        adc #0
+        asl
         tay
 
-        ; calculate source base address (right screen)
+        ; calculate dest address, where the column starts (bottom screen)
         clc
         lda imod25times40, y
-        adc screen_tbl, x
-        sta mth_s+1
+        sta hsr_d_l+1
         lda imod25times40+1, y
-        adc screen_tbl+1, x
-        sta mth_s+2
+        sta hsr_d_h+1
 
-        ; here there's no offset, because the copy_to always starts from the
-        ; beggining of the line, as it is the right screen. 
-
-        ; copy to the corresponding line (first/last) of the framebuffer
-        ; dl stands for dest line, which is actually an offet that refers
-        ; to the beggining of the screen line.
         lda swap_addr
         clc    
-hsr_d_l adc #$c0
-        adc #0      ; TODO review this
-
-        sta mth_d+1
+hsr_d_l adc #$0
+        sta cc_d+1
         lda swap_addr+1
-hsr_d_h adc #3
-        adc #0      ; TODO and this
-        sta mth_d+2
+hsr_d_h adc #0
+        sta cc_d+2
 
-        ; adjust dest offset, for the right screen
-        ldx viewport_x
-        lda #41       ; TODO review, this works, but wtf?
-        sbc imod40, x
-        clc
-        adc mth_d+1
-        sta mth_d+1
-        lda mth_d+2
-        adc #0
-        sta mth_d+2
+        ldy viewport_y
+        lda imod40, y
+        sta cc_n+1   ; internal offset, copy_to is always from 0.
 
-        ldx viewport_x
-        lda imod40, x
-        sta mth_n+1   ; internal offset, copy_to is always from 0.
-
-        jsr memcpy_to_h
+        jsr copy_column
  
 
 ;=====================================================================================================================
