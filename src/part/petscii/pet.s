@@ -676,6 +676,10 @@ move_cam_left:
         jsr screen_copy_back
  
 
+        ; TODO REMOVE ME
+        ;jmp hs_copy_from_bottom_screen
+        ; TODO REMOVE ME
+
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 hs_copy_from_top_screen
         ; take the last line from the corresponding screen, which can
@@ -738,9 +742,6 @@ hs_dc   adc #0
 
 
 hs_copy_from_bottom_screen
-        ; take the last line from the corresponding screen, which can
-        ; be found by getting the current screen slot and then applying
-        ; the offset needed.
         ldy viewport_y
         
         lda imod25, y
@@ -749,31 +750,32 @@ hs_copy_from_bottom_screen
 
         tya
         clc
-hsr_nc1 adc #24 ; TODO maybe 24
+hsr_nc1 adc #24 ; a = viewport_y + 24, so we know to which screen maps (viewport_x, viewport_y+24), which belongs to the the bottom screen. 
         tay
         ldx viewport_x
         clc
 hsr_nc2 adc #0  ; 0 for left, 40 for right
-        jsr getslot_ptr ; returns in x, a
+        jsr getslot_ptr ; (viewport_x, viewport_y+24), returns in x, a
         
-        ; calculate source base address (right screen)
+        ; calculate source base address (bottom screen)
         ldy viewport_x
         clc
         lda imod40, y
         adc screen_tbl, x
         sta cc_s+1
         lda #0
-        adc cc_s+2
+        adc screen_tbl+1,x
         sta cc_s+2
-
-        lda viewport_y
-        clc
-        adc #0
-        asl
-        tay
 
         ; calculate dest address, where the column starts (bottom screen)
         clc
+        sec
+        ldy viewport_y
+        lda #25
+        sbc imod25, y
+        asl
+        tay
+
         lda imod25times40, y
         sta hsr_d_l+1
         lda imod25times40+1, y
@@ -781,14 +783,14 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
 
         lda swap_addr
         clc    
-hsr_d_l adc #$0
+hsr_d_l adc #0
         sta cc_d+1
         lda swap_addr+1
 hsr_d_h adc #0
         sta cc_d+2
 
         ldy viewport_y
-        lda imod40, y
+        lda imod25, y
         sta cc_n+1   ; internal offset, copy_to is always from 0.
 
         jsr copy_column
