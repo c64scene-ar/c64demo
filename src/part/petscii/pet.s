@@ -35,6 +35,7 @@ loadaddr
 
 .(
 +getslot_ptr
+        lda theend
         lda copy_column
         lda hscroll_copy
         lda move_cam_right
@@ -97,10 +98,10 @@ setup
         sta     $d018
  
         ; Setup screen colors
-        lda     #0
-        sta     $D020 ; Border color (TODO should be taken from petscii file)
-        lda     #0    
-        sta     $D021 ; Background color (TODO should be taken from petscii file)
+        ;lda     #0
+        ;sta     $D020 ; Border color (TODO should be taken from petscii file)
+        ;lda     #0    
+        ;sta     $D021 ; Background color (TODO should be taken from petscii file)
 
         ; Setup initial color ram
         ;
@@ -287,8 +288,8 @@ interrupt
         stx savex+1
         sty savey+1
  
-        lda #0
-        sta $d020
+        ;lda #0
+        ;sta $d020
 
         ; Keyboard handling
         ;
@@ -388,6 +389,10 @@ left_cnt_limit_cap
         lda #$0
         sta hs_min1+1
         sta hs_min2+1
+        sta hs_nl1+1
+        sta hs_nl2+1
+        sta hs_dc+1
+        sta hsr_nc2+1
         jmp hscroll
 isrightkey:
         clc
@@ -404,9 +409,18 @@ right_limit_ok
 right_limit_cap
         lda #$0
         sta hs_max1+1
+        sta hs_nl2+1
         lda #$7
         sta hs_min1+1
         sta hs_min2+1
+
+        lda #39
+        sta hs_nl1+1
+        sta hs_dc+1
+        sta hsr_nc2+1
+
+        lda #41
+ 
         jmp hscroll
 
 
@@ -654,11 +668,12 @@ move_cam_right:
         lda swap_addr+1
         sta sc_d+2
         jsr screen_copy
-        jmp hs_min2
+        jmp hs_copy_from_top_screen
 
         ; shift the screen left, by copying from the current view to the current view address + 1
 move_cam_left:
         dec viewport_x
+
         lda swap_addr
         clc
         adc #$0
@@ -678,6 +693,7 @@ move_cam_left:
 
         ; TODO REMOVE ME
         ;jmp hs_copy_from_bottom_screen
+        ;jmp hs_min2
         ; TODO REMOVE ME
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
@@ -685,14 +701,12 @@ hs_copy_from_top_screen
         ; take the last line from the corresponding screen, which can
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
-        ldx viewport_x
-        lda viewport_y
-        clc
-        
-        ; vs_nl1/2 (new line) are either #0 or #39, depending on the direction
+        ldy viewport_y
+        lda viewport_x
 
-hs_nl1  adc #0 ; last line of the viewport (39 + 1 incremented before)
-        tay
+        clc
+hs_nl1  adc #0 ; last column of the viewport (39 + 1 incremented before)
+        tax
         jsr getslot_ptr ; returns in x, a
         
         lda viewport_y
@@ -711,7 +725,6 @@ hs_nl2  adc #0
         sta cc_s+2
 
         ; calculate source offset (top screen)
-        clc
         ldx viewport_x
         lda imod40, x
         adc cc_s+1
@@ -752,9 +765,10 @@ hs_copy_from_bottom_screen
         clc
 hsr_nc1 adc #24 ; a = viewport_y + 24, so we know to which screen maps (viewport_x, viewport_y+24), which belongs to the the bottom screen. 
         tay
-        ldx viewport_x
+        lda viewport_x
         clc
 hsr_nc2 adc #0  ; 0 for left, 40 for right
+        tax
         jsr getslot_ptr ; (viewport_x, viewport_y+24), returns in x, a
         
         ; calculate source base address (bottom screen)
@@ -836,4 +850,4 @@ hcnt .byt 7
 #include "parser/split/info.s"
 #include "swap.s"
 
-
+theend
