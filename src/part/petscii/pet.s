@@ -35,8 +35,10 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda theend
+        lda debughere
         lda copy_column
+        lda viewport_x
+        lda viewport_y
         lda hscroll_copy
         lda move_cam_right
         clc
@@ -393,6 +395,7 @@ left_cnt_limit_cap
         sta hs_nl2+1
         sta hs_dc+1
         sta hsr_nc2+1
+        sta hsr_dc+1
         jmp hscroll
 isrightkey:
         clc
@@ -415,11 +418,12 @@ right_limit_cap
         sta hs_min2+1
 
         lda #39
-        sta hs_nl1+1
-        sta hs_dc+1
-        sta hsr_nc2+1
 
-        lda #41
+        sta hs_nl1+1
+        lda #39
+        sta hs_dc+1
+        sta hsr_dc+1
+        sta hsr_nc2+1
  
         jmp hscroll
 
@@ -492,13 +496,13 @@ vs_copy_from_left_screen
         
         ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
 
-vs_nl1  adc #0 ; last line of the viewport (24 + 1 incremented before)
+vs_nl1  adc #41 ; last line of the viewport (24 + 1 incremented before)
         tay
         jsr getslot_ptr ; returns in x, a
         
         lda viewport_y
         clc
-vs_nl2  adc #0
+vs_nl2  adc #41
         asl
         tay
 
@@ -689,7 +693,6 @@ move_cam_left:
         adc #$3
         sta sc_b_d+2
         jsr screen_copy_back
- 
 
         ; TODO REMOVE ME
         ;jmp hs_copy_from_bottom_screen
@@ -705,7 +708,7 @@ hs_copy_from_top_screen
         lda viewport_x
 
         clc
-hs_nl1  adc #0 ; last column of the viewport (39 + 1 incremented before)
+hs_nl1  adc #41 ; last column of the viewport (39 + 1 incremented before)
         tax
         jsr getslot_ptr ; returns in x, a
         
@@ -726,6 +729,12 @@ hs_nl2  adc #0
 
         ; calculate source offset (top screen)
         ldx viewport_x
+        ;lda #0
+        ;cmp hs_nl1+1
+debughere
+;        beq top_no_dex
+;        dex
+top_no_dex
         lda imod40, x
         adc cc_s+1
         sta cc_s+1
@@ -738,7 +747,7 @@ hs_nl2  adc #0
         ; to the beggining of the screen line.
         clc    
         lda swap_addr
-hs_dc   adc #0
+hs_dc   adc #41
         sta cc_d+1
 
         lda swap_addr+1
@@ -746,7 +755,7 @@ hs_dc   adc #0
         sta cc_d+2
 
         sec
-        lda #25    ; TODO maybe 24
+        lda #25   
         ldy viewport_y
         sbc imod25, y
         sta cc_n+1 
@@ -773,6 +782,11 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
         
         ; calculate source base address (bottom screen)
         ldy viewport_x
+        lda hs_nl1+1
+        cmp #0
+        beq bottom_no_dey
+        dey  ; TODO WTF
+bottom_no_dey
         clc
         lda imod40, y
         adc screen_tbl, x
@@ -794,6 +808,15 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
         sta hsr_d_l+1
         lda imod25times40+1, y
         sta hsr_d_h+1
+
+        clc
+hsr_dc  lda #0
+        adc hsr_d_l+1
+        sta hsr_d_l+1
+        lda #0
+        adc hsr_d_h+1
+        sta hsr_d_h+1
+        
 
         lda swap_addr
         clc    
