@@ -350,6 +350,9 @@ down_cnt_limit_cap
         sta vsr_d_l+1
         jmp vscroll
 isupkey:
+        lda vcnt
+        cmp #$0
+        bne up_limit_ok
         lda viewport_y
         cmp #$0
         bne up_limit_ok
@@ -510,6 +513,7 @@ vs_nl2  adc #41
         clc
         lda imod25times40, y
         adc screen_tbl, x
+        dec
         sta mfh_s+1
         lda imod25times40+1, y
         adc screen_tbl+1, x
@@ -729,12 +733,15 @@ hs_nl2  adc #0
 
         ; calculate source offset (top screen)
         ldx viewport_x
-        ;lda #0
-        ;cmp hs_nl1+1
+        lda #0
+;        cmp hs_nl1+1
 debughere
-;        beq top_no_dex
+;        bne top_inx
+        dex
+;        jmp top_copy_col
+;top_inx
 ;        dex
-top_no_dex
+top_copy_col
         lda imod40, x
         adc cc_s+1
         sta cc_s+1
@@ -867,10 +874,10 @@ savey   ldy #0
 
         rti
 
-vcnt .byt 7
-hcnt .byt 7
 
 #include "parser/split/info.s"
+vcnt .byt 7
+hcnt .byt 7
 #include "swap.s"
 
 theend

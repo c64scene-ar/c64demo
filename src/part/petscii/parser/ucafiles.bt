@@ -79,12 +79,12 @@ struct UCAFILE {
                 local byte first_pass = 1;
                 local byte byt;
                 local byte is_char;
-                local unsigned int data_size;
+                local unsigned int data_size = 0;
 
                 local unsigned int orig_pos = FTell();
 
-                while (!FEof()) {
-                    byt = ReadByte();
+                while (1) {
+                    byt = ReadByte(orig_pos + data_size);
                     is_char = 0;
                     if (byt < 0x10) {
                         if ((first_pass != 1) && (last_byt < 0x10) && (last_is_char == 0)) {
@@ -103,16 +103,16 @@ struct UCAFILE {
                             break;
                         }
                     }
-                    FSeek(FTell() + 1);
                     data_size += 1;
                     first_pass = 0;
                     last_byt = byt;
                     last_is_char = is_char;
                 }
-                FSeek( orig_pos );
                 SetBackColor(cLtAqua);
                 byte data[data_size+1];
 
             } layers[num_layers] <optimize=false >;
         } frames[num_frames] <optimize=false>;
 } ucafile;
+
+
