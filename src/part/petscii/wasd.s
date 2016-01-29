@@ -35,11 +35,6 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda isupkey
-        lda isleftkey
-        lda isrightkey
-        lda isupkey
-        lda isdownkey
         lda debughere
         lda copy_column
         lda viewport_x
@@ -357,10 +352,10 @@ down_cnt_limit_cap
         sta vsr_d_l+1
         jmp vscroll
 isupkey:
-        lda viewport_y
-        cmp #$0
-        bne up_limit_ok
         lda vcnt
+        cmp #$7
+        bne up_limit_ok
+        lda viewport_y
         cmp #$0
         bne up_limit_ok
         jmp nokey
@@ -389,29 +384,23 @@ isleftkey:
         lda viewport_x
         cmp #$0
         bne left_limit_ok
-        lda hcnt
-        cmp #$7
-        bne left_limit_ok
-        jmp set_hscroll
+        jmp nokey
 left_limit_ok
-        lda hcnt
-        cmp #$8
-        beq left_apply_limit_cap
+        lda #7
+        cmp hcnt
+        beq left_cnt_limit_cap
         inc hcnt
-left_apply_limit_cap
-        lda #$8
-        sta hs_copy_when_shifted_to+1
-
+left_cnt_limit_cap
+        lda #$7
+        sta hs_max1+1
         lda #$0
-        sta hs_reset_to+1
-        ;sta hs_min1+1
+        sta hs_min1+1
+        sta hs_min2+1
         sta hs_nl1+1
         sta hs_nl2+1
         sta hs_dc+1
         sta hsr_nc2+1
         sta hsr_dc+1
-        lda #0
-        sta going_right
         jmp hscroll
 isrightkey:
         clc
@@ -419,26 +408,19 @@ isrightkey:
         adc #40
         cmp imagesize+0
         bne right_limit_ok
-        lda hcnt
-        cmp #$0
-        bne right_limit_ok
-        jmp set_hscroll
+        jmp nokey
 right_limit_ok
-        lda #$ff
-        cmp hcnt
-        beq right_apply_limit_cap
-        dec hcnt
-debughere
-right_apply_limit_cap
-        lda #$ff
-        sta hs_copy_when_shifted_to+1
-
         lda #$0
+        cmp hcnt
+        beq right_limit_cap
+        dec hcnt
+right_limit_cap
+        lda #$0
+        sta hs_max1+1
         sta hs_nl2+1
-
         lda #$7
-        ;sta hs_min1+1
-        sta hs_reset_to+1
+        sta hs_min1+1
+        sta hs_min2+1
 
         lda #39
 
@@ -447,9 +429,6 @@ right_apply_limit_cap
         sta hs_dc+1
         sta hsr_dc+1
         sta hsr_nc2+1
-
-        lda #1
-        sta going_right
  
         jmp hscroll
 
@@ -527,7 +506,6 @@ vs_nl1  adc #41 ; last line of the viewport (24 + 1 incremented before)
         jsr getslot_ptr ; returns in x, a
         
         lda viewport_y
-        dec
         clc
 vs_nl2  adc #41
         asl
@@ -635,7 +613,7 @@ vsr_d_h adc #3
 
         ; adjust dest offset, for the right screen
         ldx viewport_x
-        lda #41       ; TODO review
+        lda #41       ; TODO review, this works, but wtf?
         sbc imod40, x
         clc
         adc mth_d+1
@@ -667,22 +645,22 @@ vs_min2 ldx #0
 
 ;=====================================================================================================================
 hscroll
-
+        lda $d016 ; horizontal
+        and #%11111000
+        ora hcnt
+        sta $d016  ; horizontal
         ldx hcnt
-hs_copy_when_shifted_to
-        cpx #$8
-        beq hscroll_copy        
-        jmp set_hscroll
+hs_max1 cpx #$7 
+        beq hscroll_copy
+        jmp nocopy
 
 hscroll_copy
         ; reset scroll counter
-;hs_reset_to
-;        ldx #$00  ; direction, 00 left, 07 right
-;        stx hcnt
+hs_min1 ldx #$00  ; direction, 00 left, 07 right
+        stx hcnt
 
         lda #$0
-      ;  cmp hs_min1+1
-        cmp going_right
+        cmp hs_min1+1
         beq move_cam_left
 
 move_cam_right:
@@ -757,11 +735,14 @@ hs_nl2  adc #0
 
         ; calculate source offset (top screen)
         ldx viewport_x
-        lda hs_nl1+1
-        cmp #0
-        bne top_copy_col
+        lda #0
+;        cmp hs_nl1+1
+debughere
+;        bne top_inx
         dex
-
+;        jmp top_copy_col
+;top_inx
+;        dex
 top_copy_col
         lda imod40, x
         adc cc_s+1
@@ -796,7 +777,7 @@ hs_copy_from_bottom_screen
         
         lda imod25, y
         cmp #0
-        beq hs_reset_to
+        beq hs_min2
 
         tya
         clc
@@ -810,9 +791,9 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
         
         ; calculate source base address (bottom screen)
         ldy viewport_x
-        lda hs_nl1+1
-        cmp #0
-        beq bottom_no_dey
+        ;ƒlda hs_nl1+1
+        ;cmp #0
+        ;beq bottom_no_dey
         dey  ; TODO WTF
 bottom_no_dey
         clc
@@ -859,25 +840,16 @@ hsr_d_h adc #0
         sta cc_n+1   ; internal offset, copy_to is always from 0.
 
         jsr copy_column
+ 
 
 ;=====================================================================================================================
-hs_reset_to 
-        ldx #0
+hs_min2 ldx #0
         stx hcnt
-set_hscroll
-;        lda $d016  ; horizontal
-;        and #%11111000
-;        ora hcnt
-;        sta $d016  ; horizontal
-        lda hcnt
-        and #%00000111
-        sta hcapped+1
-        lda $d016 ; horizontal
+
+        lda $d016  ; horizontal
         and #%11111000
-hcapped ora #%11111111
-        ;ora hcnt
+        ora hcnt
         sta $d016  ; horizontal
-        ;ldx hcnt
 
         jsr swap_banks
         jsr copy_to_swap
@@ -907,7 +879,7 @@ savey   ldy #0
 
 #include "parser/split/info.s"
 vcnt .byt 7
-hcnt .byt 7
+hcnt .byt 0
 #include "swap.s"
-going_right .byt 1
+
 theend
