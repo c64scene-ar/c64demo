@@ -392,7 +392,7 @@ isleftkey:
         lda hcnt
         cmp #$7
         bne left_limit_ok
-        jmp set_hscroll
+        jmp nokey
 left_limit_ok
         lda hcnt
         cmp #$8
@@ -428,7 +428,6 @@ right_limit_ok
         cmp hcnt
         beq right_apply_limit_cap
         dec hcnt
-debughere
 right_apply_limit_cap
         lda #$ff
         sta hs_copy_when_shifted_to+1
@@ -441,12 +440,12 @@ right_apply_limit_cap
         sta hs_reset_to+1
 
         lda #39
+        sta hsr_nc2+1
 
-        sta hs_nl1+1
         lda #39
+        sta hs_nl1+1
         sta hs_dc+1
         sta hsr_dc+1
-        sta hsr_nc2+1
 
         lda #1
         sta going_right
@@ -729,6 +728,7 @@ move_cam_left:
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 hs_copy_from_top_screen
+debughere
         ; take the last line from the corresponding screen, which can
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
@@ -757,9 +757,10 @@ hs_nl2  adc #0
 
         ; calculate source offset (top screen)
         ldx viewport_x
-        lda hs_nl1+1
-        cmp #0
+        lda going_right
+        cmp #1
         bne top_copy_col
+        dex
         dex
 
 top_copy_col
@@ -787,9 +788,7 @@ hs_dc   adc #41
         ldy viewport_y
         sbc imod25, y
         sta cc_n+1 
-
         jsr copy_column
-
 
 hs_copy_from_bottom_screen
         ldy viewport_y
@@ -810,7 +809,8 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
         
         ; calculate source base address (bottom screen)
         ldy viewport_x
-        lda hs_nl1+1
+;        lda hs_nl1+1
+        lda going_right
         cmp #0
         beq bottom_no_dey
         dey  ; TODO WTF
