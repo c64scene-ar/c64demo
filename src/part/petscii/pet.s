@@ -761,9 +761,10 @@ hs_nl2  adc #0
         cmp #1
         bne top_copy_col
         dex
-        dex
+        ;dex
 
 top_copy_col
+        clc
         lda imod40, x
         adc cc_s+1
         sta cc_s+1
