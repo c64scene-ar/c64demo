@@ -429,7 +429,7 @@ left_apply_limit_cap
 isrightkey:
         clc
         lda viewport_x
-        adc #39
+        adc #38
         cmp imagesize+0
         bne right_limit_ok
         lda hcnt
