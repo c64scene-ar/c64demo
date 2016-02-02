@@ -35,19 +35,10 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda isupkey
-        lda isleftkey
-        lda isrightkey
-        lda isupkey
-        lda isdownkey
         lda debughere
+        lda color_tbl
+        lda colortblptr
         lda copy_column
-        lda viewport_x
-        lda viewport_y
-        lda hscroll_copy
-        lda move_cam_right
-        lda vcnt
-        lda hcnt
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -290,6 +281,31 @@ sc_b_d  sta $7777,x
 screen_copy_b_done
         rts
 
+colortblptr
+        lda color_tbl
+        lda colortblptr+1
+        sta tblref1+1
+        sta tblref3+1
+        sta tblref5+1
+        sta tblref7+1
+        clc
+        inc
+        sta tblref2+2
+        sta tblref4+2
+        sta tblref6+2
+        sta tblref8+2
+        lda colortblptr+2
+        sta tblref1+2
+        sta tblref3+2
+        sta tblref5+2
+        sta tblref7+2
+        adc #0
+        sta tblref2+2
+        sta tblref4+2
+        sta tblref6+2
+        sta tblref8+2
+
+        rts
 ;=====================================================================================================================
 interrupt
         sei
@@ -307,6 +323,7 @@ interrupt
         ;
         ; WASD movement.
         ;
+
         lda #$fd
         sta $dc00 ; up/down (W/S). it also gets the status of A.
         lda $dc01 ; read keyboard status
@@ -327,23 +344,32 @@ checkrightkey
 nokey_trampoline
         jmp nokey
 isdownkey:
+        jsr colortblptr
         clc
         lda viewport_y
-        adc #25
+        adc #24
         cmp imagesize+1
         bne down_limit_ok
-        jmp nokey
+        lda vcnt
+        cmp #$7
+        bne down_limit_ok
+        jmp set_vscroll
 down_limit_ok
-        lda #$0
+        lda #$ff
         cmp vcnt
-        beq down_cnt_limit_cap
+        beq down_apply_limit_cap
         dec vcnt
-down_cnt_limit_cap
+down_apply_limit_cap
+
+        lda #$ff
+        sta vs_copy_when_shifted_to+1
+
         lda #$0
-        sta vs_max1+1
+        sta vs_nl2+1
+
         lda #$7
-        sta vs_min1+1
-        sta vs_min2+1
+        sta vs_reset_to+1
+
         lda #24
         sta vs_nl1+1
         sta vs_nl2+1
@@ -355,26 +381,29 @@ down_cnt_limit_cap
         lda #$c0
         sta vs_dl_l+1
         sta vsr_d_l+1
+
+        lda #1
+        sta going_down
         jmp vscroll
+
 isupkey:
         lda viewport_y
         cmp #$0
         bne up_limit_ok
         lda vcnt
-        cmp #$0
+        cmp #$7
         bne up_limit_ok
         jmp nokey
 up_limit_ok
-        lda #$7
+        lda #$8
         cmp vcnt
         beq up_cnt_limit_cap
         inc vcnt 
 up_cnt_limit_cap
-        lda #$7
-        sta vs_max1+1
+        lda #$8
+        sta vs_copy_when_shifted_to+1
         lda #$0
-        sta vs_min1+1
-        sta vs_min2+1
+        sta vs_reset_to+1
         sta vs_nl1+1
         sta vs_nl2+1
         sta vs_dl_h+1
@@ -383,6 +412,8 @@ up_cnt_limit_cap
         sta vsr_nl2+1
         sta vsr_d_l+1
         sta vsr_d_h+1
+        lda #0
+        sta going_down
         jmp vscroll
 
 isleftkey:
@@ -392,7 +423,7 @@ isleftkey:
         lda hcnt
         cmp #$7
         bne left_limit_ok
-        jmp set_hscroll
+        jmp nokey
 left_limit_ok
         lda hcnt
         cmp #$8
@@ -416,11 +447,11 @@ left_apply_limit_cap
 isrightkey:
         clc
         lda viewport_x
-        adc #40
+        adc #38
         cmp imagesize+0
         bne right_limit_ok
         lda hcnt
-        cmp #$0
+        cmp #$7
         bne right_limit_ok
         jmp set_hscroll
 right_limit_ok
@@ -428,7 +459,6 @@ right_limit_ok
         cmp hcnt
         beq right_apply_limit_cap
         dec hcnt
-debughere
 right_apply_limit_cap
         lda #$ff
         sta hs_copy_when_shifted_to+1
@@ -441,12 +471,12 @@ right_apply_limit_cap
         sta hs_reset_to+1
 
         lda #39
+        sta hsr_nc2+1
 
-        sta hs_nl1+1
         lda #39
+        sta hs_nl1+1
         sta hs_dc+1
         sta hsr_dc+1
-        sta hsr_nc2+1
 
         lda #1
         sta going_right
@@ -454,27 +484,18 @@ right_apply_limit_cap
         jmp hscroll
 
 
+
 ;=====================================================================================================================
 vscroll
-        ;lda $d016 ; horizontal
-        lda $d011  ; vertical
-        and #%11111000
-        ora vcnt
-        ;sta $d016  ; horizontal
-        sta $d011  ; vertical
         ldx vcnt
-vs_max1 cpx #$7 
+vs_copy_when_shifted_to
+        cpx #$8 
         beq vscroll_copy
-        jmp nocopy
+        jmp set_vscroll
 
 vscroll_copy
-        ; reset scroll counter
-vs_min1 ldx #$00  ; direction, 00 up, 07 down
-        stx vcnt
-
-        ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
         lda #$0
-        cmp vs_min1+1
+        cmp going_down
         beq move_cam_up
 
 move_cam_down:
@@ -536,10 +557,12 @@ vs_nl2  adc #41
         ; calculate source base address (left screen)
         clc
         lda imod25times40, y
+tblref1
         adc screen_tbl, x
         dec
         sta mfh_s+1
         lda imod25times40+1, y
+tblref2
         adc screen_tbl+1, x
         sta mfh_s+2
 
@@ -583,7 +606,7 @@ vs_copy_from_right_screen
         
         lda imod40, x ; patch for coordinates aligned to 40, where theres no right screen.
         cmp #0
-        beq vs_min2
+        beq vs_reset_to
 
         txa
         clc
@@ -610,9 +633,11 @@ vsr_nl2 adc #0
         ; calculate source base address (right screen)
         clc
         lda imod25times40, y
+tblref3
         adc screen_tbl, x
         sta mth_s+1
         lda imod25times40+1, y
+tblref4
         adc screen_tbl+1, x
         sta mth_s+2
 
@@ -651,19 +676,24 @@ vsr_d_h adc #3
         jsr memcpy_to_h
  
 ;=====================================================================================================================
-vs_min2 ldx #0
-        stx vcnt
 
-        lda $d011  ; vertical
+vs_reset_to 
+        ldx #0
+        stx vcnt
+set_vscroll
+        lda vcnt
+        and #%00000111
+        sta vcapped+1
+        lda $d011 ; vertical
         and #%11111000
-        ora vcnt
-        ;sta $d016  ; horizontal
-        sta $d011  ; vertical 
+vcapped ora #%11111111
+        sta $d011  ; vertical
 
         jsr swap_banks
         jsr copy_to_swap
         jsr swap_banks
         jmp done_scrolling
+
 
 ;=====================================================================================================================
 hscroll
@@ -746,23 +776,28 @@ hs_nl2  adc #0
         asl
         tay
 
+debughere
         ; calculate source base address for the column (top screen)
         clc
         lda imod25times40, y
+tblref5
         adc screen_tbl, x
         sta cc_s+1
         lda imod25times40+1, y
+tblref6
         adc screen_tbl+1, x
         sta cc_s+2
 
         ; calculate source offset (top screen)
         ldx viewport_x
-        lda hs_nl1+1
-        cmp #0
+        lda going_right
+        cmp #1
         bne top_copy_col
         dex
+        ;dex
 
 top_copy_col
+        clc
         lda imod40, x
         adc cc_s+1
         sta cc_s+1
@@ -787,9 +822,7 @@ hs_dc   adc #41
         ldy viewport_y
         sbc imod25, y
         sta cc_n+1 
-
         jsr copy_column
-
 
 hs_copy_from_bottom_screen
         ldy viewport_y
@@ -810,16 +843,19 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
         
         ; calculate source base address (bottom screen)
         ldy viewport_x
-        lda hs_nl1+1
+;        lda hs_nl1+1
+        lda going_right
         cmp #0
         beq bottom_no_dey
         dey  ; TODO WTF
 bottom_no_dey
         clc
         lda imod40, y
+tblref7
         adc screen_tbl, x
         sta cc_s+1
         lda #0
+tblref8
         adc screen_tbl+1,x
         sta cc_s+2
 
@@ -901,7 +937,7 @@ savey   ldy #0
         lsr $d019 ; ack interrupt
         cli
 
-
+finish
         rti
 
 
@@ -910,4 +946,5 @@ vcnt .byt 7
 hcnt .byt 7
 #include "swap.s"
 going_right .byt 1
+going_down .byt 1
 theend
