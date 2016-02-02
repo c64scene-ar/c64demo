@@ -35,19 +35,10 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda isupkey
-        lda isleftkey
-        lda isrightkey
-        lda isupkey
-        lda isdownkey
         lda debughere
+        lda color_tbl
+        lda colortblptr
         lda copy_column
-        lda viewport_x
-        lda viewport_y
-        lda hscroll_copy
-        lda move_cam_right
-        lda vcnt
-        lda hcnt
         clc
         lda idiv40, x
         adc idiv25timeswdiv40,y
@@ -290,6 +281,31 @@ sc_b_d  sta $7777,x
 screen_copy_b_done
         rts
 
+colortblptr
+        lda color_tbl
+        lda colortblptr+1
+        sta tblref1+1
+        sta tblref3+1
+        sta tblref5+1
+        sta tblref7+1
+        clc
+        inc
+        sta tblref2+2
+        sta tblref4+2
+        sta tblref6+2
+        sta tblref8+2
+        lda colortblptr+2
+        sta tblref1+2
+        sta tblref3+2
+        sta tblref5+2
+        sta tblref7+2
+        adc #0
+        sta tblref2+2
+        sta tblref4+2
+        sta tblref6+2
+        sta tblref8+2
+
+        rts
 ;=====================================================================================================================
 interrupt
         sei
@@ -307,6 +323,7 @@ interrupt
         ;
         ; WASD movement.
         ;
+
         lda #$fd
         sta $dc00 ; up/down (W/S). it also gets the status of A.
         lda $dc01 ; read keyboard status
@@ -327,6 +344,7 @@ checkrightkey
 nokey_trampoline
         jmp nokey
 isdownkey:
+        jsr colortblptr
         clc
         lda viewport_y
         adc #24
@@ -539,10 +557,12 @@ vs_nl2  adc #41
         ; calculate source base address (left screen)
         clc
         lda imod25times40, y
+tblref1
         adc screen_tbl, x
         dec
         sta mfh_s+1
         lda imod25times40+1, y
+tblref2
         adc screen_tbl+1, x
         sta mfh_s+2
 
@@ -613,9 +633,11 @@ vsr_nl2 adc #0
         ; calculate source base address (right screen)
         clc
         lda imod25times40, y
+tblref3
         adc screen_tbl, x
         sta mth_s+1
         lda imod25times40+1, y
+tblref4
         adc screen_tbl+1, x
         sta mth_s+2
 
@@ -737,7 +759,6 @@ move_cam_left:
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 hs_copy_from_top_screen
-debughere
         ; take the last line from the corresponding screen, which can
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
@@ -755,12 +776,15 @@ hs_nl2  adc #0
         asl
         tay
 
+debughere
         ; calculate source base address for the column (top screen)
         clc
         lda imod25times40, y
+tblref5
         adc screen_tbl, x
         sta cc_s+1
         lda imod25times40+1, y
+tblref6
         adc screen_tbl+1, x
         sta cc_s+2
 
@@ -827,9 +851,11 @@ hsr_nc2 adc #0  ; 0 for left, 40 for right
 bottom_no_dey
         clc
         lda imod40, y
+tblref7
         adc screen_tbl, x
         sta cc_s+1
         lda #0
+tblref8
         adc screen_tbl+1,x
         sta cc_s+2
 
@@ -911,7 +937,7 @@ savey   ldy #0
         lsr $d019 ; ack interrupt
         cli
 
-
+finish
         rti
 
 
