@@ -329,11 +329,11 @@ nokey_trampoline
 isdownkey:
         clc
         lda viewport_y
-        adc #25
+        adc #24
         cmp imagesize+1
         bne down_limit_ok
         lda vcnt
-        cmp #$0
+        cmp #$7
         bne down_limit_ok
         jmp set_vscroll
 down_limit_ok
@@ -367,7 +367,6 @@ down_apply_limit_cap
         lda #1
         sta going_down
         jmp vscroll
-
 
 isupkey:
         lda viewport_y
@@ -430,11 +429,11 @@ left_apply_limit_cap
 isrightkey:
         clc
         lda viewport_x
-        adc #40
+        adc #39
         cmp imagesize+0
         bne right_limit_ok
         lda hcnt
-        cmp #$0
+        cmp #$7
         bne right_limit_ok
         jmp set_hscroll
 right_limit_ok
