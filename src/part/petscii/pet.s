@@ -332,18 +332,26 @@ isdownkey:
         adc #25
         cmp imagesize+1
         bne down_limit_ok
-        jmp nokey
+        lda vcnt
+        cmp #$0
+        bne down_limit_ok
+        jmp set_vscroll
 down_limit_ok
-        lda #$0
+        lda #$ff
         cmp vcnt
-        beq down_cnt_limit_cap
+        beq down_apply_limit_cap
         dec vcnt
-down_cnt_limit_cap
+down_apply_limit_cap
+
+        lda #$ff
+        sta vs_copy_when_shifted_to+1
+
         lda #$0
-        sta vs_max1+1
+        sta vs_nl2+1
+
         lda #$7
-        sta vs_min1+1
-        sta vs_min2+1
+        sta vs_reset_to+1
+
         lda #24
         sta vs_nl1+1
         sta vs_nl2+1
@@ -355,26 +363,30 @@ down_cnt_limit_cap
         lda #$c0
         sta vs_dl_l+1
         sta vsr_d_l+1
+
+        lda #1
+        sta going_down
         jmp vscroll
+
+
 isupkey:
         lda viewport_y
         cmp #$0
         bne up_limit_ok
         lda vcnt
-        cmp #$0
+        cmp #$7
         bne up_limit_ok
         jmp nokey
 up_limit_ok
-        lda #$7
+        lda #$8
         cmp vcnt
         beq up_cnt_limit_cap
         inc vcnt 
 up_cnt_limit_cap
-        lda #$7
-        sta vs_max1+1
+        lda #$8
+        sta vs_copy_when_shifted_to+1
         lda #$0
-        sta vs_min1+1
-        sta vs_min2+1
+        sta vs_reset_to+1
         sta vs_nl1+1
         sta vs_nl2+1
         sta vs_dl_h+1
@@ -383,6 +395,8 @@ up_cnt_limit_cap
         sta vsr_nl2+1
         sta vsr_d_l+1
         sta vsr_d_h+1
+        lda #0
+        sta going_down
         jmp vscroll
 
 isleftkey:
@@ -453,27 +467,18 @@ right_apply_limit_cap
         jmp hscroll
 
 
+
 ;=====================================================================================================================
 vscroll
-        ;lda $d016 ; horizontal
-        lda $d011  ; vertical
-        and #%11111000
-        ora vcnt
-        ;sta $d016  ; horizontal
-        sta $d011  ; vertical
         ldx vcnt
-vs_max1 cpx #$7 
+vs_copy_when_shifted_to
+        cpx #$8 
         beq vscroll_copy
-        jmp nocopy
+        jmp set_vscroll
 
 vscroll_copy
-        ; reset scroll counter
-vs_min1 ldx #$00  ; direction, 00 up, 07 down
-        stx vcnt
-
-        ; shift the screen down, by copying from the current view + 40 (0x28) to the current view address
         lda #$0
-        cmp vs_min1+1
+        cmp going_down
         beq move_cam_up
 
 move_cam_down:
@@ -582,7 +587,7 @@ vs_copy_from_right_screen
         
         lda imod40, x ; patch for coordinates aligned to 40, where theres no right screen.
         cmp #0
-        beq vs_min2
+        beq vs_reset_to
 
         txa
         clc
@@ -650,19 +655,24 @@ vsr_d_h adc #3
         jsr memcpy_to_h
  
 ;=====================================================================================================================
-vs_min2 ldx #0
-        stx vcnt
 
-        lda $d011  ; vertical
+vs_reset_to 
+        ldx #0
+        stx vcnt
+set_vscroll
+        lda vcnt
+        and #%00000111
+        sta vcapped+1
+        lda $d011 ; vertical
         and #%11111000
-        ora vcnt
-        ;sta $d016  ; horizontal
-        sta $d011  ; vertical 
+vcapped ora #%11111111
+        sta $d011  ; vertical
 
         jsr swap_banks
         jsr copy_to_swap
         jsr swap_banks
         jmp done_scrolling
+
 
 ;=====================================================================================================================
 hscroll
@@ -911,4 +921,5 @@ vcnt .byt 7
 hcnt .byt 7
 #include "swap.s"
 going_right .byt 1
+going_down .byt 1
 theend
