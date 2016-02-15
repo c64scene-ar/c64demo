@@ -35,9 +35,9 @@ loadaddr
 
 .(
 +getslot_ptr
-        lda debughere
-        lda color_tbl
-        lda colortblptr
+;        lda hswap_prepare_swap
+        lda screen_copy
+;        lda debughere
         lda copy_column
         clc
         lda idiv40, x
@@ -60,7 +60,7 @@ setup
         ora vcnt
         sta $d016
 
-        lda #$1e ; IRQ setup
+        lda #$05 ; IRQ setup
         sta $d012
  
         ;lda     #0
@@ -156,8 +156,10 @@ c       lda $7f00, x
         bne memcpy_c
 
         ; copy initial screen to swap
-        jsr copy_to_swap
+        jsr copy_to_swap_stage_1
+        jsr copy_to_swap_stage_2
 ;        jsr swap_banks
+
         rts
 .)
 
@@ -238,74 +240,25 @@ cc_loop
 ;------------------------
 screen_copy
         ldx #0
-        ldy #4
 screen_copy_loop
 sc_s    lda $3828,x
 sc_d    sta $3800,x
         inx
-        cpx #0
+        cpx #$fa
         bne screen_copy_loop
-        dey
-        cpy #0
-        beq screen_copy_done
-        ldx #0
-        inc sc_s+2
-        inc sc_d+2
-        jmp screen_copy_loop
-
-screen_copy_done
-        lda #$38
-        sta sc_s+2
-        sta sc_d+2
-
         rts
 
 ;------------------------
 screen_copy_back
-        ldx #$ff
-        ldy #4
+        ldx #$f9
 screen_copy_b_loop
 sc_b_s  lda $6666,x
 sc_b_d  sta $7777,x
         dex
         cpx #$ff
         bne screen_copy_b_loop
-        dey
-        cpy #0
-        beq screen_copy_b_done
-        ldx #$ff
-        dec sc_b_s+2
-        dec sc_b_d+2
-        jmp screen_copy_b_loop
-
-screen_copy_b_done
         rts
 
-colortblptr
-        lda color_tbl
-        lda colortblptr+1
-        sta tblref1+1
-        sta tblref3+1
-        sta tblref5+1
-        sta tblref7+1
-        clc
-        inc
-        sta tblref2+2
-        sta tblref4+2
-        sta tblref6+2
-        sta tblref8+2
-        lda colortblptr+2
-        sta tblref1+2
-        sta tblref3+2
-        sta tblref5+2
-        sta tblref7+2
-        adc #0
-        sta tblref2+2
-        sta tblref4+2
-        sta tblref6+2
-        sta tblref8+2
-
-        rts
 ;=====================================================================================================================
 interrupt
         sei
@@ -313,7 +266,7 @@ interrupt
         stx savex+1
         sty savey+1
  
-        ;lda #0
+        ;lda #1
         ;sta $d020
 
         ; Keyboard handling
@@ -324,6 +277,12 @@ interrupt
         ; WASD movement.
         ;
 
+        lda hcnt
+        cmp #$7
+        beq read_keyboard
+        jmp hkeep_moving
+
+read_keyboard
         lda #$fd
         sta $dc00 ; up/down (W/S). it also gets the status of A.
         lda $dc01 ; read keyboard status
@@ -344,7 +303,6 @@ checkrightkey
 nokey_trampoline
         jmp nokey
 isdownkey:
-        jsr colortblptr
         clc
         lda viewport_y
         adc #24
@@ -435,6 +393,10 @@ left_apply_limit_cap
 
         lda #$0
         sta hs_reset_to+1
+
+;        lda #$0
+;        sta hs_reset_to+1
+
         ;sta hs_min1+1
         sta hs_nl1+1
         sta hs_nl2+1
@@ -443,6 +405,7 @@ left_apply_limit_cap
         sta hsr_dc+1
         lda #0
         sta going_right
+
         jmp hscroll
 isrightkey:
         clc
@@ -483,7 +446,15 @@ right_apply_limit_cap
  
         jmp hscroll
 
-
+hkeep_moving
+        lda #$1
+        cmp going_right
+        beq hmright
+        inc hcnt
+        jmp hscroll
+hmright
+        dec hcnt
+        jmp hscroll
 
 ;=====================================================================================================================
 vscroll
@@ -690,10 +661,51 @@ vcapped ora #%11111111
         sta $d011  ; vertical
 
         jsr swap_banks
-        jsr copy_to_swap
+        jsr copy_to_swap_stage_1
+        jsr copy_to_swap_stage_2
         jsr swap_banks
         jmp done_scrolling
 
+
+sc_wrapper
+        clc
+        lda swap_addr
+sc_w_sl adc #$20
+        sta sc_s+1
+        lda swap_addr+1
+sc_w_sh adc #$3
+        sta sc_s+2
+
+        clc
+        lda swap_addr
+sc_w_dl adc #$21
+        sta sc_d+1
+
+        lda swap_addr+1
+sc_w_dh adc #$3
+        sta sc_d+2
+        jsr screen_copy
+        rts
+
+sc_b_wrapper
+         clc
+         lda swap_addr
+sc_wb_sl adc #$21
+         sta sc_b_s+1
+         lda swap_addr+1
+sc_wb_sh adc #$3
+         sta sc_b_s+2
+
+         clc
+         lda swap_addr
+sc_wb_dl adc #$20
+         sta sc_b_d+1
+
+         lda swap_addr+1
+sc_wb_dh adc #$3
+         sta sc_b_d+2
+         jsr screen_copy_back
+         rts
 
 ;=====================================================================================================================
 hscroll
@@ -705,57 +717,17 @@ hs_copy_when_shifted_to
         jmp set_hscroll
 
 hscroll_copy
-        ; reset scroll counter
-;hs_reset_to
-;        ldx #$00  ; direction, 00 left, 07 right
-;        stx hcnt
-
         lda #$0
-      ;  cmp hs_min1+1
         cmp going_right
-        beq move_cam_left
+        beq move_cam_left ; going left
 
-move_cam_right:
+move_cam_right: ; going right
         inc viewport_x
-
-        ; Screen copy, source is swap_addr + 1
-        clc
-        lda swap_addr
-        adc #$1
-        sta sc_s+1
-        lda swap_addr+1
-        sta sc_s+2
-        lda swap_addr
-        sta sc_d+1
-        lda swap_addr+1
-        sta sc_d+2
-        jsr screen_copy
         jmp hs_copy_from_top_screen
 
         ; shift the screen left, by copying from the current view to the current view address + 1
 move_cam_left:
         dec viewport_x
-
-        lda swap_addr
-        clc
-        adc #$0
-        sta sc_b_s+1
-        lda swap_addr+1
-        adc #$3
-        sta sc_b_s+2
-        lda swap_addr
-        clc
-        adc #$1
-        sta sc_b_d+1
-        lda swap_addr+1
-        adc #$3
-        sta sc_b_d+2
-        jsr screen_copy_back
-
-        ; TODO REMOVE ME
-        ;jmp hs_copy_from_bottom_screen
-        ;jmp hs_min2
-        ; TODO REMOVE ME
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 hs_copy_from_top_screen
@@ -776,7 +748,6 @@ hs_nl2  adc #0
         asl
         tay
 
-debughere
         ; calculate source base address for the column (top screen)
         clc
         lda imod25times40, y
@@ -901,10 +872,6 @@ hs_reset_to
         ldx #0
         stx hcnt
 set_hscroll
-;        lda $d016  ; horizontal
-;        and #%11111000
-;        ora hcnt
-;        sta $d016  ; horizontal
         lda hcnt
         and #%00000111
         sta hcapped+1
@@ -915,14 +882,108 @@ hcapped ora #%11111111
         sta $d016  ; horizontal
         ;ldx hcnt
 
-        jsr swap_banks
-        jsr copy_to_swap
-        jsr swap_banks
+        lda #$1
+        cmp going_right
+        bne hscroll_do_left_scroll
+        jmp hscroll_do_right_scroll
 
+.(
++hscroll_do_left_scroll
+        lda hcnt
+        cmp #$7
+        ; do color ram copy stage 2
+        beq hswap_swap
+
+        cmp #$6
+        beq copy_color_ram
+
+        cmp #$2
+        bmi hswap_prepare_swap
+
+        sec
+        sbc #$2
+        tax
+
+        lda fasteps_lo, x
+        sta sc_wb_sl+1
+        clc
+        adc #$1
+        sta sc_wb_dl+1
+        lda fasteps_hi, x
+        sta sc_wb_dh+1
+        sta sc_wb_sh+1
+        jsr sc_b_wrapper
+        jmp done_scrolling
+
+hswap_prepare_swap
+        cmp #$1
+        bne hswap_two
+        jsr copy_to_swap_stage_1
+        jmp done_scrolling
+hswap_two
+        jsr copy_to_swap_stage_2
+        jmp done_scrolling
+
+hswap_swap
+        jsr swap_banks
+        jmp done_scrolling
+
+copy_color_ram
+        ; not implemented
+        jmp done_scrolling
+.)
+
+
+.(
++hscroll_do_right_scroll
+        lda hcnt
+        cmp #$7
+        ; do color ram copy stage 2
+        beq hswap_swap
+
+        cmp #$0
+        beq copy_color_ram
+
+        cmp #$5
+        bpl hswap_prepare_swap
+
+        sec
+        lda #$4
+        sbc hcnt
+        tax
+
+        lda fasteps_lo, x
+        sta sc_w_dl+1
+        clc
+        adc #$1
+        sta sc_w_sl+1
+        lda fasteps_hi, x
+        sta sc_w_dh+1
+        sta sc_w_sh+1
+        jsr sc_wrapper
+        jmp done_scrolling
+
+hswap_prepare_swap
+        cmp #$5
+        bne hswap_two
+        jsr copy_to_swap_stage_1
+        jmp done_scrolling
+hswap_two
+        jsr copy_to_swap_stage_2
+        jmp done_scrolling
+
+hswap_swap
+        jsr swap_banks
+        jmp done_scrolling
+
+copy_color_ram
+        ; not implemented
+        jmp done_scrolling
+.)
 ;=====================================================================================================================
 
-
 done_scrolling
+
 nocopy
 nokey
 
@@ -947,4 +1008,9 @@ hcnt .byt 7
 #include "swap.s"
 going_right .byt 1
 going_down .byt 1
+fasteps_lo .byt $00, $fa, $f4, $ee
+fasteps_hi .byt $00, $00, $01, $02
+
+action_taken .byt $00
+
 theend

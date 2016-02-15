@@ -36,7 +36,23 @@ swap_finish
         rts
 
 ; copy current screen to swap
-copy_to_swap
+;copy_to_swap
+        ; the second element is the currently selected bank
+;        ldx swap_addr+2
+;        stx sc_s+1
+;        ldx swap_addr+3
+;        stx sc_s+2
+
+        ; the first one is the frame buffer
+;        ldx swap_addr+0
+;        stx sc_d+1
+;        ldx swap_addr+1
+;        stx sc_d+2
+;        jsr screen_copy
+;        rts
+
+
+copy_to_swap_stage_1
         ; the second element is the currently selected bank
         ldx swap_addr+2
         stx sc_s+1
@@ -49,6 +65,84 @@ copy_to_swap
         ldx swap_addr+1
         stx sc_d+2
         jsr screen_copy
+
+         ; the second element is the currently selected bank
+        clc
+        lda swap_addr+2
+        adc #$fa
+        sta sc_s+1
+        lda swap_addr+3
+        adc #$00
+        sta sc_s+2
+
+        ; the first one is the frame buffer
+        clc
+        lda swap_addr+0
+        adc #$fa
+        sta sc_d+1
+        lda swap_addr+1
+        adc #$00
+        sta sc_d+2
+        jsr screen_copy
+        rts
+
+copy_to_swap_stage_2
+         ; the second element is the currently selected bank
+        clc
+        lda swap_addr+2
+        adc #$f4
+        sta sc_s+1
+        lda swap_addr+3
+        adc #$01
+        sta sc_s+2
+
+        ; the first one is the frame buffer
+        clc
+        lda swap_addr+0
+        adc #$f4
+        sta sc_d+1
+        lda swap_addr+1
+        adc #$01
+        sta sc_d+2
+        jsr screen_copy
+
+         ; the second element is the currently selected bank
+        clc
+        lda swap_addr+2
+        adc #$ee
+        sta sc_s+1
+        lda swap_addr+3
+        adc #$02
+        sta sc_s+2
+
+        ; the first one is the frame buffer
+        clc
+        lda swap_addr+0
+        adc #$ee
+        sta sc_d+1
+        lda swap_addr+1
+        adc #$02
+        sta sc_d+2
+        jsr screen_copy
+
+         ; the second element is the currently selected bank
+;        clc
+;        lda swap_addr+2
+;        adc #$20
+;        sta sc_s+1
+;        lda swap_addr+3
+;        adc #$03
+;        sta sc_s+2;
+
+        ; the first one is the frame buffer
+;        clc
+;        lda swap_addr+0
+;        adc #$20
+;        sta sc_d+1
+;        lda swap_addr+1
+;        adc #$03
+;        sta sc_d+2
+;        jsr screen_copy
         rts
 
 
