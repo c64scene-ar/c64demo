@@ -35,9 +35,10 @@ loadaddr
 
 .(
 +getslot_ptr
+        lda debughere
 ;        lda hswap_prepare_swap
         lda screen_copy
-;        lda debughere
+        lda screen_copy_back
         lda copy_column
         clc
         lda idiv40, x
@@ -266,8 +267,8 @@ interrupt
         stx savex+1
         sty savey+1
  
-        ;lda #1
-        ;sta $d020
+        lda #1
+        sta $d020
 
         ; Keyboard handling
         ;
@@ -388,16 +389,12 @@ left_limit_ok
         beq left_apply_limit_cap
         inc hcnt
 left_apply_limit_cap
-        lda #$8
+        lda #$6
         sta hs_copy_when_shifted_to+1
 
         lda #$0
         sta hs_reset_to+1
 
-;        lda #$0
-;        sta hs_reset_to+1
-
-        ;sta hs_min1+1
         sta hs_nl1+1
         sta hs_nl2+1
         sta hs_dc+1
@@ -405,6 +402,9 @@ left_apply_limit_cap
         sta hsr_dc+1
         lda #0
         sta going_right
+
+        jsr swap_bank_registers
+        ;jsr swap_banks
 
         jmp hscroll
 isrightkey:
@@ -666,7 +666,6 @@ vcapped ora #%11111111
         jsr swap_banks
         jmp done_scrolling
 
-
 sc_wrapper
         clc
         lda swap_addr
@@ -713,7 +712,7 @@ hscroll
         ldx hcnt
 hs_copy_when_shifted_to
         cpx #$8
-        beq hscroll_copy        
+        beq hscroll_copy
         jmp set_hscroll
 
 hscroll_copy
@@ -868,11 +867,18 @@ hsr_d_h adc #0
         jsr copy_column
 
 ;=====================================================================================================================
+
 hs_reset_to 
         ldx #0
+        lda #0
+        cmp going_right
+        beq set_hscroll
         stx hcnt
 set_hscroll
         lda hcnt
+debughere
+        cmp #$08
+        beq hscroll_skip_reg
         and #%00000111
         sta hcapped+1
         lda $d016 ; horizontal
@@ -882,6 +888,7 @@ hcapped ora #%11111111
         sta $d016  ; horizontal
         ;ldx hcnt
 
+hscroll_skip_reg
         lda #$1
         cmp going_right
         bne hscroll_do_left_scroll
@@ -894,6 +901,9 @@ hcapped ora #%11111111
         ; do color ram copy stage 2
         beq hswap_swap
 
+        cmp #$8
+        beq hswap_prepare_swap
+
         cmp #$6
         beq copy_color_ram
 
@@ -901,9 +911,9 @@ hcapped ora #%11111111
         bmi hswap_prepare_swap
 
         sec
-        sbc #$2
+        lda #$5
+        sbc hcnt
         tax
-
         lda fasteps_lo, x
         sta sc_wb_sl+1
         clc
@@ -922,7 +932,7 @@ hswap_prepare_swap
         jmp done_scrolling
 hswap_two
         jsr copy_to_swap_stage_2
-        jmp done_scrolling
+        jmp hswap_reset
 
 hswap_swap
         jsr swap_banks
@@ -930,6 +940,16 @@ hswap_swap
 
 copy_color_ram
         ; not implemented
+        jmp done_scrolling
+
+hswap_reset
+        lda #$0
+        sta hcnt
+
+        lda $d016 ; horizontal
+        and #%11111000
+        sta $d016  ; horizontal
+
         jmp done_scrolling
 .)
 
@@ -991,8 +1011,8 @@ savea   lda #0
 savex   ldx #0
 savey   ldy #0
     
-;        lda #$00
-;        sta $d020
+        lda #$00
+        sta $d020
 ;        sta $d021
 
         lsr $d019 ; ack interrupt

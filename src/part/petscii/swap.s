@@ -8,6 +8,7 @@ swap_banks
         ldx swap_addr+1
         stx swap_addr+3
         sty swap_addr+1
+swap_bank_registers
         cpy #$3c        ; WARNING hardcoded, depends on using $3cxx for one bank
         bne swap_to_two
 swap_to_one
