@@ -36,6 +36,9 @@ loadaddr
 .(
 +getslot_ptr
         lda debughere
+        lda viewport_x
+        lda viewport_y
+        lda hcnt
 ;        lda hswap_prepare_swap
         lda screen_copy
         lda screen_copy_back
@@ -400,10 +403,11 @@ left_apply_limit_cap
         sta hs_dc+1
         sta hsr_nc2+1
         sta hsr_dc+1
+
         lda #0
         sta going_right
 
-        jsr swap_bank_registers
+;        jsr swap_bank_registers
         ;jsr swap_banks
 
         jmp hscroll
@@ -443,6 +447,7 @@ right_apply_limit_cap
 
         lda #1
         sta going_right
+        sta was_going_right
  
         jmp hscroll
 
@@ -716,6 +721,9 @@ hs_copy_when_shifted_to
         jmp set_hscroll
 
 hscroll_copy
+        lda #$5
+        sta $d020
+
         lda #$0
         cmp going_right
         beq move_cam_left ; going left
@@ -726,7 +734,7 @@ move_cam_right: ; going right
 
         ; shift the screen left, by copying from the current view to the current view address + 1
 move_cam_left:
-        dec viewport_x
+        ;dec viewport_x
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 hs_copy_from_top_screen
@@ -876,7 +884,6 @@ hs_reset_to
         stx hcnt
 set_hscroll
         lda hcnt
-debughere
         cmp #$08
         beq hscroll_skip_reg
         and #%00000111
@@ -890,6 +897,9 @@ hcapped ora #%11111111
 
 hscroll_skip_reg
         lda #$1
+        sta $d020
+
+        lda #$1
         cmp going_right
         bne hscroll_do_left_scroll
         jmp hscroll_do_right_scroll
@@ -897,19 +907,22 @@ hscroll_skip_reg
 .(
 +hscroll_do_left_scroll
         lda hcnt
-        cmp #$7
-        ; do color ram copy stage 2
-        beq hswap_swap
++debughere
 
         cmp #$8
         beq hswap_prepare_swap
 
+        cmp #$7
+        ; do color ram copy stage 2
+        beq hswap_swap
+
         cmp #$6
         beq copy_color_ram
 
-        cmp #$2
-        bmi hswap_prepare_swap
+        cmp #$1
+        beq hswap_prepare_swap
 
+        ; cases 2,3,4,5
         sec
         lda #$5
         sbc hcnt
@@ -926,16 +939,50 @@ hscroll_skip_reg
         jmp done_scrolling
 
 hswap_prepare_swap
-        cmp #$1
+        cmp #$8
         bne hswap_two
+
+        ; patch to take advantage of the fact that when 
+        ; the direction is changed, the current swap contains
+        ; the screen data we need.
+        lda #0
+        cmp was_going_right
+        beq hswap_one_dec
+        sta was_going_right
+        lda viewport_x
+        cmp #1
+        beq hswap_skip_dec
+        dec viewport_x
+hswap_skip_dec
+        jsr swap_banks
+
+hswap_one_dec
+        ; reset to 0
+        lda #$0
+        sta hcnt
+
+        lda $d016 ; horizontal
+        and #%11111000
+
+        sta $d016  ; horizontal
+
+        dec viewport_x
+
         jsr copy_to_swap_stage_1
         jmp done_scrolling
 hswap_two
         jsr copy_to_swap_stage_2
-        jmp hswap_reset
+        jmp done_scrolling
 
 hswap_swap
+;        jsr swap_bank_registers
         jsr swap_banks
+
+        lda $d016 ; horizontal
+;        and #%11111000
+        ora #%00000111
+        sta $d016  ; horizontal
+
         jmp done_scrolling
 
 copy_color_ram
@@ -1027,6 +1074,7 @@ vcnt .byt 7
 hcnt .byt 7
 #include "swap.s"
 going_right .byt 1
+was_going_right .byt 1
 going_down .byt 1
 fasteps_lo .byt $00, $fa, $f4, $ee
 fasteps_hi .byt $00, $00, $01, $02
