@@ -35,6 +35,9 @@ loadaddr
 
 .(
 +getslot_ptr
+        lda screen_copy
+        lda screen_copy_back
+
         lda hs_copy_from_top_screen
         lda hscroll_do_left_scroll
         lda debughere
@@ -42,8 +45,6 @@ loadaddr
         lda viewport_y
         lda hcnt
 ;        lda hswap_prepare_swap
-        lda screen_copy
-        lda screen_copy_back
         lda copy_column
 
         clc
@@ -286,8 +287,14 @@ interrupt
 
         lda hcnt
         cmp #$7
-        beq read_keyboard
+        beq check_vcont
         jmp hkeep_moving
+
+check_vcont
+        lda vcnt
+        cmp #$7
+        beq read_keyboard
+        jmp vkeep_moving
 
 read_keyboard
         lda #$fd
@@ -309,6 +316,7 @@ checkrightkey
         jmp isrightkey
 nokey_trampoline
         jmp nokey
+
 isdownkey:
         clc
         lda viewport_y
@@ -318,12 +326,13 @@ isdownkey:
         lda vcnt
         cmp #$7
         bne down_limit_ok
-        jmp set_vscroll
+        jmp nokey
 down_limit_ok
         lda #$ff
         cmp vcnt
         beq down_apply_limit_cap
         dec vcnt
+
 down_apply_limit_cap
 
         lda #$ff
@@ -365,7 +374,7 @@ up_limit_ok
         beq up_cnt_limit_cap
         inc vcnt 
 up_cnt_limit_cap
-        lda #$8
+        lda #$7
         sta vs_copy_when_shifted_to+1
         lda #$0
         sta vs_reset_to+1
@@ -463,7 +472,18 @@ hmright
         dec hcnt
         jmp hscroll
 
+vkeep_moving
+        lda #$1
+        cmp going_down
+        beq vmdown
+        inc vcnt
+        jmp vscroll
+vmdown
+        dec vcnt
+        jmp vscroll
+
 ;=====================================================================================================================
+
 vscroll
         ldx vcnt
 vs_copy_when_shifted_to
@@ -478,37 +498,11 @@ vscroll_copy
 
 move_cam_down:
         inc viewport_y
-        lda swap_addr
-        clc
-        adc #$28
-        sta sc_s+1
-        lda swap_addr+1
-        sta sc_s+2
-        lda swap_addr
-        sta sc_d+1
-        lda swap_addr+1
-        sta sc_d+2
-        jsr screen_copy
         jmp vs_copy_from_left_screen
 
         ; shift the screen up, by copying from the current view to the current view address + 0x328
 move_cam_up:
         dec viewport_y
-        lda swap_addr
-        clc
-        adc #$0
-        sta sc_b_s+1
-        lda swap_addr+1
-        adc #$3
-        sta sc_b_s+2
-        lda swap_addr
-        clc
-        adc #$28
-        sta sc_b_d+1
-        lda swap_addr+1
-        adc #$3
-        sta sc_b_d+2
-        jsr screen_copy_back
 
         ; memcopy_from_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 vs_copy_from_left_screen
@@ -516,17 +510,29 @@ vs_copy_from_left_screen
         ; be found by getting the current screen slot and then applying
         ; the offset needed.
         ldx viewport_x
-        lda viewport_y
-        clc
-        
-        ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
+        ldy viewport_y
 
+        lda #1
+        cmp going_down
+        beq skip_getslot_dey
+        dey
+skip_getslot_dey
+        tya
+
+        clc        
+        ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
 vs_nl1  adc #41 ; last line of the viewport (24 + 1 incremented before)
         tay
         jsr getslot_ptr ; returns in x, a
-        
-        lda viewport_y
-        dec
+
+        ldy viewport_y        
+        lda #1
+        cmp going_down
+        beq skip_src_dey
+        dey
+skip_src_dey
+        tya
+
         clc
 vs_nl2  adc #41
         asl
@@ -574,7 +580,6 @@ vs_dl_h adc #3
 
         jsr memcpy_from_h
 
-
         ; memcopy_to_h( swap, getslot_ptr(viewport_x, viewport_y + offset), viewport_x % 40 )
 vs_copy_from_right_screen
         ; take the last line from the corresponding screen, which can
@@ -590,9 +595,16 @@ vs_copy_from_right_screen
         clc
         adc #40
         tax
-        lda viewport_y
+
+        ldy viewport_y        
+        lda #1
+        cmp going_down
+        beq skip_src_up_getslot_dey
+        dey
+skip_src_up_getslot_dey
+        tya
+
         clc
-        
         ; vs_nl1/2 (new line) are either #0 or #24, depending on the direction
 
 vsr_nl1 adc #0 ; last line (or first) of the viewport (if last, 24 + 1 incremented before)
@@ -600,7 +612,14 @@ vsr_nl1 adc #0 ; last line (or first) of the viewport (if last, 24 + 1 increment
         jsr getslot_ptr ; returns in x, a
         
         ; offset vertically
-        lda viewport_y
+        ldy viewport_y        
+        lda #1
+        cmp going_down
+        beq skip_src_up_dey
+        dey
+skip_src_up_dey
+        tya
+
         clc
 vsr_nl2 adc #0
         asl ; this is because y is going to be used as an index of imod25times40, 
@@ -657,9 +676,15 @@ vsr_d_h adc #3
 
 vs_reset_to 
         ldx #0
+        lda #0
+        cmp going_down
+        beq set_vscroll
         stx vcnt
 set_vscroll
         lda vcnt
+        cmp #$08
+        beq vscroll_skip_reg
+
         and #%00000111
         sta vcapped+1
         lda $d011 ; vertical
@@ -667,11 +692,144 @@ set_vscroll
 vcapped ora #%11111111
         sta $d011  ; vertical
 
-        jsr swap_banks
+vscroll_skip_reg
+        lda #$1
+        sta $d020
+
+        cmp going_down
+        bne vscroll_do_up_scroll
+        jmp vscroll_do_down_scroll
+
+.(
++vscroll_do_up_scroll
+        lda vcnt
+
+        cmp #$8
+        beq vswap_swap
+
+        cmp #$1
+        beq vswap_prepare_swap
+
+        cmp #$2
+        beq vswap_prepare_swap
+
+        cmp #$7
+        beq copy_color_ram
+
+        ; cases 3,4,5,6
+        lda vcnt
+        sta $d020
+
+        sec
+        lda #$6
+        sbc vcnt
+        tax
+        lda fasteps_lo, x
+        sta sc_wb_sl+1
+        clc
+        adc #40
+        sta sc_wb_dl+1
+        lda fasteps_hi, x
+        sta sc_wb_sh+1
+        adc #0
+        sta sc_wb_dh+1
+        jsr sc_b_wrapper
+        jmp done_scrolling
+
+
+vswap_prepare_swap
+        ;lda #08
+        ;sta $d020
+
+        cmp #$1
+        bne vswap_two
         jsr copy_to_swap_stage_1
+        jmp done_scrolling
+vswap_two
         jsr copy_to_swap_stage_2
+        jmp done_scrolling
+
+vswap_swap
+        lda #08
+        sta $d020
+
+vswap_one_dec
+        jsr swap_banks
+        lda #$0
+        sta vcnt
+        lda $d011 ; vertical
+        and #%11111000
+        sta $d011  ; vertical
+        jmp done_scrolling
+
+copy_color_ram
+        ; not implemented
+        lda #0
+        sta last_was_horizontal
+        lda #1
+        sta last_was_vertical
+
+        jmp done_scrolling
+.)
+
+
+.(
++vscroll_do_down_scroll
+        lda vcnt
+        cmp #$7
+        ; do color ram copy stage 2
+        beq vswap_swap
+
+        cmp #$0
+        beq copy_color_ram
+
+        cmp #$5
+        bpl vswap_prepare_swap
+
+        sec
+        lda #$4
+        sbc vcnt
+        tax
+
+        lda vcnt
+        sta $d020
+
+        ; cases 1,2,3,4
+        lda fasteps_lo, x
+        sta sc_w_dl+1
+        clc
+        adc #40
+        sta sc_w_sl+1
+        lda fasteps_hi, x
+        sta sc_w_dh+1
+        adc #0
+        sta sc_w_sh+1
+        jsr sc_wrapper
+        jmp done_scrolling
+
+vswap_prepare_swap
+        cmp #$5
+        bne vswap_two
+        jsr copy_to_swap_stage_1
+        jmp done_scrolling
+vswap_two
+        jsr copy_to_swap_stage_2
+        jmp done_scrolling
+
+vswap_swap
         jsr swap_banks
         jmp done_scrolling
+
+copy_color_ram
+        ; not implemented
+        lda #0
+        sta last_was_horizontal
+        lda #1
+        sta last_was_vertical
+        jmp done_scrolling
+.)
+;=====================================================================================================================
+
 
 sc_wrapper
         clc
@@ -749,6 +907,8 @@ hs_copy_from_top_screen
         lda #1
         cmp going_right
         beq skip_getslot_dex
+        cmp last_was_vertical
+        beq skip_getslot_dex
         dex
 skip_getslot_dex
         txa
@@ -777,9 +937,9 @@ tblref6
         ; calculate source offset (top screen)
         ldx viewport_x
         
-        ;lda going_right
-        ;cmp #1
-        ;bne top_copy_col
+;        lda last_was_vertical
+ ;       cmp #1
+  ;      bne top_copy_col
         ;dex
         dex
 
@@ -823,18 +983,20 @@ hs_copy_from_bottom_screen
 hsr_nc1 adc #24 ; a = viewport_y + 24, so we know to which screen maps (viewport_x, viewport_y+24), which belongs to the the bottom screen. 
         tay
         lda viewport_x
+
         clc
 hsr_nc2 adc #0  ; 0 for left, 40 for right
         tax
+        dex ; TODO CHECK
+
         jsr getslot_ptr ; (viewport_x, viewport_y+24), returns in x, a
         
         ; calculate source base address (bottom screen)
         ldy viewport_x
-;        lda hs_nl1+1
         lda going_right
         cmp #0
-        beq bottom_no_dey
-        ;dey  ; TODO WTF
+        ;beq bottom_no_dey
+        dey  ; TODO WTF
 bottom_no_dey
         clc
         lda imod40, y
@@ -889,13 +1051,8 @@ hs_reset_to
         ldx #0
         lda #0
         cmp going_right
-        beq left_avoid_n
+        beq set_hscroll
         stx hcnt
-        jmp set_hscroll
-left_avoid_n
-  ;      cmp hcnt
-  ;      beq hscroll_skip_reg
-
 set_hscroll
         lda hcnt
         cmp #$08
@@ -906,15 +1063,12 @@ set_hscroll
         lda $d016 ; horizontal
         and #%11111000
 hcapped ora #%11111111
-        ;ora hcnt
         sta $d016  ; horizontal
-        ;ldx hcnt
 
 hscroll_skip_reg
         lda #$1
         sta $d020
 
-        lda #$1
         cmp going_right
         bne hscroll_do_left_scroll
         jmp hscroll_do_right_scroll
@@ -936,6 +1090,9 @@ hscroll_skip_reg
         beq copy_color_ram
 
         ; cases 3,4,5,6
+        lda hcnt
+        sta $d020
+
         sec
         lda #$6
         sbc hcnt
@@ -952,6 +1109,9 @@ hscroll_skip_reg
         jmp done_scrolling
 
 hswap_prepare_swap
+        ;lda #08
+        ;sta $d020
+
         cmp #$1
         bne hswap_two
         jsr copy_to_swap_stage_1
@@ -964,23 +1124,36 @@ hswap_swap
         lda #08
         sta $d020
 
-        ; patch to take advantage of the fact that when 
-        ; the direction is changed, the current swap contains
-        ; the screen data we need.
+        lda #1
+        cmp last_was_vertical
+        bne hswap_do_swap
+        cmp going_right
+        beq hswap_do_swap
+        jsr swap_banks
+        lda $d011 ; horizontal
+        and #%11111000
+        sta $d011  ; horizontal
+        lda #$0
+        sta hcnt
+        jmp done_scrolling
 
-hswap_one_dec
-        ;dec viewport_x
-
+hswap_do_swap
         jsr swap_banks
         lda #$0
         sta hcnt
         lda $d016 ; horizontal
         and #%11111000
         sta $d016  ; horizontal
+
         jmp done_scrolling
 
 copy_color_ram
         ; not implemented
+        lda #0
+        sta last_was_vertical
+        lda #1
+        sta last_was_horizontal
+
         jmp done_scrolling
 .)
 
@@ -1002,6 +1175,11 @@ copy_color_ram
         lda #$4
         sbc hcnt
         tax
+
+        lda hcnt
+        sta $d020
+
+        ; cases 1,2,3,4
 
         lda fasteps_lo, x
         sta sc_w_dl+1
@@ -1029,6 +1207,11 @@ hswap_swap
 
 copy_color_ram
         ; not implemented
+        lda #0
+        sta last_was_vertical
+        lda #1
+        sta last_was_horizontal
+
         jmp done_scrolling
 .)
 ;=====================================================================================================================
@@ -1053,8 +1236,6 @@ check_f7
         cmp swap_addr+1
         beq skip_swap
 
-
-
 do_swap
         jsr swap_banks
 skip_swap
@@ -1064,27 +1245,55 @@ skip_swap
         sta $dc00 ; up/down (W/S). it also gets the status of A.
         lda $dc01 ; read keyboard status
         cmp #$fe  
-        bne check_f7_shift
+        bne check_f7_hshift
         lda #$7
         cmp hmanualshift
-        beq skip_shift
+        beq skip_hshift
         inc hmanualshift
-        jmp do_shift
-check_f7_shift
+        jmp do_hshift
+check_f7_hshift
         cmp #$f7
-        bne skip_shift
+        bne skip_hshift
         lda #$0
         cmp hmanualshift
-        beq skip_shift
+        beq skip_hshift
         dec hmanualshift
 
-do_shift
+do_hshift
         lda $d016 ; horizontal
         and #%11111000
         ora hmanualshift
         sta $d016  ; horizontal
 
-skip_shift
+skip_hshift
+
+
+
+        lda #$fd
+        sta $dc00 ; up/down (W/S). it also gets the status of A.
+        lda $dc01 ; read keyboard status
+        cmp #$fe  
+        bne check_f7_vshift
+        lda #$7
+        cmp vmanualshift
+        beq skip_vshift
+        inc vmanualshift
+        jmp do_vshift
+check_f7_vshift
+        cmp #$f7
+        bne skip_vshift
+        lda #$0
+        cmp vmanualshift
+        beq skip_vshift
+        dec vmanualshift
+
+do_vshift
+        lda $d011 ; horizontal
+        and #%11111000
+        ora vmanualshift
+        sta $d011  ; horizontal
+
+skip_vshift
 
 savea   lda #0
 savex   ldx #0
@@ -1105,10 +1314,13 @@ finish
 vcnt .byt 7
 hcnt .byt 7
 hmanualshift .byt 7
+vmanualshift .byt 7
 
 #include "swap.s"
 going_right .byt 1
 going_down .byt 1
+last_was_vertical .byt 1
+last_was_horizontal .byt 1
 fasteps_lo .byt $00, $fa, $f4, $ee
 fasteps_hi .byt $00, $00, $01, $02
 
