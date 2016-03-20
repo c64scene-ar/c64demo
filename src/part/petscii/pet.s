@@ -1,3 +1,6 @@
+INIT = $1000
+PLAY = $1003
+
         ; efo header
         .byt    "EFO2"  ; fileformat magic
         .word   0       ; prepare routine
@@ -6,21 +9,11 @@
         .word   0    ; main routine
         .word   0       ; fadeout routine
         .word   0       ; cleanup routine
-        .word   0       ; location of playroutine call
-
-        ; tags go here
-
-        ;.byt   "P",$04,$07 ; range of pages in use
-        ;.byt   "I",$10,$1f ; range of pages inherited
-        ;.byt   "Z",$02,$03 ; range of zero-page addresses in use
-        ;.byt   "X"     ; avoid loading
-        ;.byt   "M",<play,>play ; install music playroutine
-
-        .byt    "S"     ; i/o safe
-        .byt    0       ; end of tags hola
+        .word   0       ; location of playroutine call;;;
+        .byt    0       ; end of tags 
 
         .word   loadaddr
-        * = $2000
+        * = $e000
 loadaddr
 
 ;
@@ -33,14 +26,17 @@ loadaddr
 ; returns both in a and x
 ;
 
+
+
 .(
 +getslot_ptr
+        lda debughere   
+        lda hscroll_do_left_scroll
         lda screen_copy
         lda screen_copy_back
 
         lda hs_copy_from_top_screen
         lda hscroll_do_left_scroll
-        lda debughere
         lda viewport_x
         lda viewport_y
         lda hcnt
@@ -57,20 +53,24 @@ loadaddr
         rts
 .)
  
+
 setup
         ; initial screen shift
-        lda #$13 ; was 1b
+        lda #$13 ; was 13
         ora vcnt
         sta $d011
+
 
         lda $d016
         and #%11110000
         ora vcnt
         sta $d016
 
-        lda #$05 ; IRQ setup
+        lda #$01 ; IRQ setup
         sta $d012
- 
+
+        lda #0
+        jsr INIT
         ;lda     #0
         ;sta     $d015 ; Disable sprites
         ;sta     $d017 ; Disable sprite double height
@@ -110,6 +110,7 @@ setup
         ;sta     $D020 ; Border color (TODO should be taken from petscii file)
         ;lda     #0    
         ;sta     $D021 ; Background color (TODO should be taken from petscii file)
+
 
         ; Setup initial color ram
         ;
@@ -268,12 +269,18 @@ sc_b_d  sta $7777,x
         rts
 
 ;=====================================================================================================================
+
+
 interrupt
         sei
         sta savea+1
         stx savex+1
         sty savey+1
  
+        jsr PLAY
+        
+;        jmp skip_vshift
+
         lda #1
         sta $d020
 
@@ -388,6 +395,7 @@ up_cnt_limit_cap
         sta vsr_d_h+1
         lda #0
         sta going_down
+
         jmp vscroll
 
 isleftkey:
@@ -799,7 +807,7 @@ copy_color_ram
         sta sc_w_dl+1
         clc
         adc #40
-        sta sc_w_sl+1
+        sta sc_w_sl+1   
         lda fasteps_hi, x
         sta sc_w_dh+1
         adc #0
@@ -873,7 +881,6 @@ sc_wb_dh adc #$3
 
 ;=====================================================================================================================
 hscroll
-debughere
         ldx hcnt
 hs_copy_when_shifted_to
         cpx #$8
@@ -937,8 +944,8 @@ tblref6
         ; calculate source offset (top screen)
         ldx viewport_x
         
-;        lda last_was_vertical
- ;       cmp #1
+  ;      lda last_was_vertical
+  ;      cmp #1
   ;      bne top_copy_col
         ;dex
         dex
@@ -1075,7 +1082,7 @@ hscroll_skip_reg
 
 .(
 +hscroll_do_left_scroll
-        lda hcnt
+        lda hcnt    
 
         cmp #$8
         beq hswap_swap
@@ -1087,8 +1094,10 @@ hscroll_skip_reg
         beq hswap_prepare_swap
 
         cmp #$7
-        beq copy_color_ram
+        bne hextracases
+        jmp copy_color_ram
 
+hextracases
         ; cases 3,4,5,6
         lda hcnt
         sta $d020
@@ -1129,10 +1138,38 @@ hswap_swap
         bne hswap_do_swap
         cmp going_right
         beq hswap_do_swap
-        jsr swap_banks
-        lda $d011 ; horizontal
+        
+        ; WARNING, Recently patched, NO FUCKING IDEA.
+        ;ldy viewport_y
+        ;dey
+        ;sty viewport_y
+
+&debughere
+;jmhere
+;        inc cnter
+;        lda cnter
+;        cmp #$ff
+;        bne jmhere
+;        lda #$00
+;        sta cnter
+;        inc cnter2
+;        lda cnter2
+;        cmp #$c
+;        bne jmhere
+;        lda #$00
+;        sta cnter
+;        sta cnter2
+
+
+        ;jsr swap_banks
+        ;jsr copy_to_swap_stage_1
+        ;jsr copy_to_swap_stage_2
+       ; jsr swap_banks
+
+        ;jsr swap_banks
+        lda $d011 ; vertical
         and #%11111000
-        sta $d011  ; horizontal
+        sta $d011  ; vertical
         lda #$0
         sta hcnt
         jmp done_scrolling
@@ -1266,9 +1303,6 @@ do_hshift
         sta $d016  ; horizontal
 
 skip_hshift
-
-
-
         lda #$fd
         sta $dc00 ; up/down (W/S). it also gets the status of A.
         lda $dc01 ; read keyboard status
@@ -1323,7 +1357,8 @@ last_was_vertical .byt 1
 last_was_horizontal .byt 1
 fasteps_lo .byt $00, $fa, $f4, $ee
 fasteps_hi .byt $00, $00, $01, $02
-
+cnter .byt $00
+cnter2 .byt $00
 action_taken .byt $00
 
 theend

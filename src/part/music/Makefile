@@ -12,5 +12,5 @@ music.pef:	install.efo music.bin
 %.prg:		%.pef
 		${PEF2PRG} -o $@ $<
 
-music.bin:	TURRO1.sid
+music.bin:	uc-yasashisa_ni.sid
 		dd if=$< of=$@ bs=1 skip=124
